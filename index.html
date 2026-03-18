@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Waktu Solat Malaysia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Cinzel:wght@400;600&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0d1117; --deep:#111820; --panel:#161e27; --card:#1c2733;
+    --border:rgba(180,145,80,0.2); --gold:#c9a84c; --gold-light:#e8c97a;
+    --gold-dim:rgba(201,168,76,0.12); --teal:#2a7a72; --teal-light:#3da99f;
+    --text:#e8e0d0; --text-dim:rgba(232,224,208,0.55); --text-muted:rgba(232,224,208,0.3);
+    --active-glow:0 0 30px rgba(201,168,76,0.25); --r:12px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--ink);color:var(--text);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(42,122,114,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(201,168,76,.08) 0%,transparent 55%);pointer-events:none;}
+  .geo{position:fixed;inset:0;z-index:0;opacity:.04;pointer-events:none;background-image:repeating-linear-gradient(60deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%),repeating-linear-gradient(-60deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%),repeating-linear-gradient(0deg,var(--gold) 0,var(--gold) 1px,transparent 0,transparent 50%);background-size:60px 60px;}
+  #app{position:relative;z-index:1;max-width:540px;margin:0 auto;padding:0 14px 60px;}
+
+  header{text-align:center;padding:32px 0 18px;}
+  .arabic-title{font-family:'Noto Nastaliq Urdu',serif;font-size:clamp(26px,7vw,40px);color:var(--gold);line-height:1.3;display:block;margin-bottom:4px;}
+  .latin-title{font-family:'Cinzel',serif;font-size:clamp(10px,3vw,13px);letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase;}
+  .hline{width:80px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);margin:12px auto 0;}
+
+  .zone-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;}
+  .zone-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;display:block;margin-bottom:8px;}
+  select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:15px;padding:9px 34px 9px 12px;appearance:none;cursor:pointer;outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23c9a84c' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+  select:focus{border-color:var(--gold);}
+  #zoneSelect{margin-top:8px;}
+  select option{background:var(--deep);}
+
+  .info-note{background:rgba(42,122,114,.1);border:1px solid rgba(42,122,114,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11.5px;color:var(--text-dim);line-height:1.6;font-style:italic;}
+  .info-note b{color:var(--gold);font-style:normal;}
+
+  .date-strip{display:flex;align-items:center;justify-content:space-between;background:var(--gold-dim);border:1px solid var(--border);border-radius:8px;padding:9px 14px;margin-bottom:12px;}
+  .date-hijri{font-family:'Noto Nastaliq Urdu',serif;font-size:14px;color:var(--gold-light);}
+  .date-miladi{font-size:13px;color:var(--text-dim);font-style:italic;}
+  .date-day{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;}
+
+  .countdown-card{background:linear-gradient(135deg,var(--teal) 0%,#1d5550 100%);border-radius:var(--r);padding:15px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 24px rgba(0,0,0,.4);overflow:hidden;position:relative;}
+  .countdown-card::after{content:'';position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.04);}
+  .countdown-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.2em;color:rgba(255,255,255,.6);text-transform:uppercase;display:block;margin-bottom:3px;}
+  .countdown-name{font-size:20px;font-weight:600;color:#fff;font-family:'Cormorant Garamond',serif;}
+  .countdown-timer{font-family:'Cinzel',serif;font-size:clamp(20px,5.5vw,26px);color:#fff;letter-spacing:.05em;font-weight:600;}
+  .countdown-sub{font-size:11px;color:rgba(255,255,255,.5);text-align:right;margin-top:2px;}
+
+  .legend{display:flex;gap:14px;justify-content:center;margin:8px 0 4px;}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim);}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .legend-dot.w{background:var(--gold);}
+  .legend-dot.e{background:var(--teal-light);}
+
+  .col-headers{display:grid;grid-template-columns:28px 1fr 78px 78px;gap:0 6px;padding:0 14px 5px;align-items:end;}
+  .col-hdr{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;text-align:right;}
+  .col-hdr.lbl{text-align:left;padding-left:4px;color:var(--text-muted);}
+  .col-hdr.cw{color:var(--gold);}
+  .col-hdr.ce{color:var(--teal-light);}
+
+  .prayers-grid{display:flex;flex-direction:column;gap:6px;}
+  .prayer-row{display:grid;grid-template-columns:28px 1fr 78px 78px;gap:0 6px;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;position:relative;overflow:hidden;transition:border-color .3s,background .3s;}
+  .prayer-row.active{border-color:var(--gold);background:var(--gold-dim);box-shadow:var(--active-glow);}
+  .prayer-row.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--gold-light),var(--gold));border-radius:2px 0 0 2px;}
+  .prayer-row.dim-row{opacity:.62;}
+  .prayer-icon{font-size:17px;text-align:center;}
+  .prayer-info{padding-left:2px;}
+  .prayer-name-ms{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--text);display:block;}
+  .prayer-name-ar{font-family:'Noto Nastaliq Urdu',serif;font-size:11px;color:var(--text-muted);}
+  .t-cell{text-align:right;}
+  .t-val{font-family:'Cinzel',serif;font-size:clamp(12px,3.3vw,15px);font-weight:600;letter-spacing:.04em;display:block;}
+  .t-val.w{color:var(--gold-light);}
+  .t-val.e{color:var(--teal-light);}
+  .t-diff{font-size:9px;color:rgba(61,169,159,.65);font-family:'Cinzel',serif;display:block;margin-top:1px;}
+  .prayer-row.active .prayer-name-ms{color:var(--gold-light);}
+  .prayer-row.active .t-val.w{color:#fff;}
+  .active-badge{position:absolute;top:5px;right:8px;font-family:'Cinzel',serif;font-size:7.5px;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:2px 6px;}
+
+  footer{text-align:center;padding:22px 0 0;font-size:11px;color:var(--text-muted);font-style:italic;border-top:1px solid var(--border);margin-top:18px;line-height:1.7;}
+  footer span{color:var(--text-dim);}
+  .ornament{text-align:center;color:var(--gold);opacity:.4;font-size:18px;margin:6px 0;letter-spacing:.4em;}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  .prayer-row{animation:fadeUp .4s ease both;}
+  .prayer-row:nth-child(1){animation-delay:.04s;}.prayer-row:nth-child(2){animation-delay:.08s;}
+  .prayer-row:nth-child(3){animation-delay:.12s;}.prayer-row:nth-child(4){animation-delay:.16s;}
+  .prayer-row:nth-child(5){animation-delay:.20s;}.prayer-row:nth-child(6){animation-delay:.24s;}
+  .prayer-row:nth-child(7){animation-delay:.28s;}
+
+  /* ── Info popup link ── */
+  .info-link{display:inline-flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);text-decoration:none;cursor:pointer;background:none;border:none;padding:0;opacity:.8;transition:opacity .2s;}
+  .info-link:hover{opacity:1;}
+  .info-link svg{width:13px;height:13px;stroke:var(--gold);flex-shrink:0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* ── Modal overlay ── */
+  .modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal-box{background:var(--deep);border:1px solid var(--border);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;transform:translateY(40px);transition:transform .35s cubic-bezier(.32,1,.28,1);padding-bottom:env(safe-area-inset-bottom,20px);}
+  .modal-overlay.open .modal-box{transform:translateY(0);}
+  .modal-handle{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin:12px auto 0;}
+  .modal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--deep);z-index:1;}
+  .modal-title{font-family:'Cinzel',serif;font-size:12px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;}
+  .modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:24px;line-height:1;padding:0 2px;transition:color .2s;}
+  .modal-close:hover{color:var(--text);}
+  .modal-body{padding:20px 20px 32px;display:flex;flex-direction:column;gap:22px;}
+
+  .psec-title{font-family:'Cinzel',serif;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .psec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+  .psec p{font-size:14px;color:var(--text-dim);line-height:1.78;margin-bottom:8px;}
+  .psec p:last-child{margin-bottom:0;}
+  .psec b{color:var(--text);font-weight:600;}
+  .psec a{color:var(--teal-light);text-decoration:none;}
+  .psec a:hover{text-decoration:underline;}
+  .psec ul{padding-left:18px;margin-top:6px;}
+  .psec ul li{font-size:14px;color:var(--text-dim);line-height:1.75;margin-bottom:4px;}
+  .psec ul li b{color:var(--text);}
+
+  .iht-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  .iht-table th{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);}
+  .iht-table td{padding:7px 10px;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;}
+  .iht-table .td-iht{text-align:right;font-family:'Cinzel',serif;color:var(--gold);font-size:12px;white-space:nowrap;}
+  .iht-table tr:last-child td{border-bottom:none;}
+
+  .formula-box{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text-dim);line-height:1.85;}
+  .formula-box code{font-family:monospace;font-size:11.5px;background:rgba(201,168,76,.1);color:var(--gold-light);padding:1px 5px;border-radius:3px;}
+
+  .warn-banner{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;}
+  .warn-icon{font-size:20px;flex-shrink:0;}
+  .warn-text{font-size:13.5px;color:var(--text-dim);line-height:1.72;}
+  .warn-text b{color:var(--gold-light);}
+  .warn-text a{color:var(--teal-light);text-decoration:none;}
+  .warn-text a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="geo"></div>
+<div id="app">
+  <header>
+    <span class="arabic-title">وقت الصلاة</span>
+    <div class="latin-title">Waktu Solat Malaysia</div>
+    <div class="hline"></div>
+  </header>
+
+  <div class="zone-wrap">
+    <span class="zone-label">Pilih Negeri &amp; Zon</span>
+    <select id="stateSelect" onchange="onStateChange()"></select>
+    <select id="zoneSelect" onchange="onZoneChange()"></select>
+  </div>
+
+  <div class="info-note" id="zoneInfo">—</div>
+
+  <div class="date-strip">
+    <div>
+      <div class="date-hijri" id="hijriDate">—</div>
+      <div class="date-day" id="dayName">—</div>
+    </div>
+    <div class="date-miladi" id="miladiDate">—</div>
+  </div>
+
+  <div class="countdown-card">
+    <div>
+      <span class="countdown-label">Waktu Solat Seterusnya</span>
+      <div class="countdown-name" id="nextPrayerName">—</div>
+    </div>
+    <div>
+      <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+      <div class="countdown-sub" id="nextPrayerTime">—</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot w"></div><span>Hujung Barat (JAKIM Rasmi)</span></div>
+    <div class="legend-item"><div class="legend-dot e"></div><span>Hujung Timur</span></div>
+  </div>
+  <div class="ornament">✦ ✦ ✦</div>
+
+  <div class="col-headers">
+    <div></div>
+    <div class="col-hdr lbl">Waktu</div>
+    <div class="col-hdr cw">◀ Barat</div>
+    <div class="col-hdr ce">Timur ▶</div>
+  </div>
+
+  <div class="prayers-grid" id="prayersGrid"></div>
+
+  <footer>
+    <p>Kaedah <span>JAKIM</span> · Anugraha "Mekanika Benda Langit" · MKI Ke-116 (2019)</p>
+    <p>Subuh 18°+2′ · Zohor +2′ · Asar +3′ · Maghrib +1′ · Isyak +2′</p>
+    <p style="margin-top:12px;">
+      <button class="info-link" onclick="openModal()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Peringatan &amp; Kaedah Pengiraan
+      </button>
+    </p>
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ZONES — west = JAKIM reference point (westernmost),
+//          east = easternmost point of zone
+// ═══════════════════════════════════════════════════════
+const ZONES = {
+  "Johor": {
+    "JHR01 - Pulau Aur & Pulau Pemanggil": {
+      zone:"JHR01",tz:8,
+      west:{lat:2.40,lng:104.45,label:"P.Pemanggil"},
+      east:{lat:2.46,lng:104.54,label:"P.Aur"}},
+    "JHR02 - Johor Bahru, Kota Tinggi, Mersing, Kulai": {
+      zone:"JHR02",tz:8,
+      west:{lat:1.48,lng:103.62,label:"Kulai"},
+      east:{lat:2.43,lng:104.11,label:"Mersing"}},
+    "JHR03 - Kluang, Pontian": {
+      zone:"JHR03",tz:8,
+      west:{lat:1.49,lng:103.38,label:"Pontian"},
+      east:{lat:2.02,lng:103.33,label:"Kluang"}},
+    "JHR04 - Batu Pahat, Muar, Segamat, Gemas, Tangkak": {
+      zone:"JHR04",tz:8,
+      west:{lat:1.86,lng:102.93,label:"Parit Raja"},
+      east:{lat:2.52,lng:103.28,label:"Segamat"}},
+  },
+  "Kedah": {
+    "KDH01 - Kota Setar, Kubang Pasu, Pokok Sena": {
+      zone:"KDH01",tz:8,
+      west:{lat:6.35,lng:100.08,label:"Kuala Kedah"},
+      east:{lat:6.10,lng:100.55,label:"Pokok Sena"}},
+    "KDH02 - Kuala Muda, Yan, Pendang": {
+      zone:"KDH02",tz:8,
+      west:{lat:5.73,lng:100.28,label:"Kuala Muda"},
+      east:{lat:5.97,lng:100.72,label:"Pendang"}},
+    "KDH03 - Padang Terap, Sik": {
+      zone:"KDH03",tz:8,
+      west:{lat:6.22,lng:100.58,label:"Padang Terap"},
+      east:{lat:5.70,lng:100.95,label:"Sik"}},
+    "KDH04 - Baling": {
+      zone:"KDH04",tz:8,
+      west:{lat:5.70,lng:100.75,label:"Baling Barat"},
+      east:{lat:5.65,lng:101.02,label:"Baling Timur"}},
+    "KDH05 - Kulim, Bandar Baharu": {
+      zone:"KDH05",tz:8,
+      west:{lat:5.37,lng:100.43,label:"Bandar Baharu"},
+      east:{lat:5.37,lng:100.72,label:"Kulim"}},
+    "KDH06 - Langkawi": {
+      zone:"KDH06",tz:8,
+      west:{lat:6.35,lng:99.63,label:"P.Tuba"},
+      east:{lat:6.42,lng:100.12,label:"Langkawi Timur"}},
+    "KDH07 - Puncak Gunung Jerai": {
+      zone:"KDH07",tz:8,elev:1200,
+      west:{lat:5.79,lng:100.43,label:"G.Jerai"},
+      east:{lat:5.79,lng:100.43,label:"G.Jerai"}},
+  },
+  "Kelantan": {
+    "KTN01 - Kota Bharu, Bachok, Pasir Puteh, Tumpat, Pasir Mas, Tanah Merah, Machang, Kuala Krai, Mukim Chiku": {
+      zone:"KTN01",tz:8,
+      west:{lat:5.43,lng:101.73,label:"Jeli/Chiku"},
+      east:{lat:6.20,lng:102.37,label:"Bachok"}},
+    "KTN02 - Gua Musang, Jeli, Lojing": {
+      zone:"KTN02",tz:8,
+      west:{lat:4.88,lng:101.77,label:"Gua Musang Barat"},
+      east:{lat:5.43,lng:101.73,label:"Jeli"}},
+  },
+  "Melaka": {
+    "MLK01 - Seluruh Negeri Melaka": {
+      zone:"MLK01",tz:8,
+      west:{lat:2.25,lng:102.07,label:"Jasin/Merlimau"},
+      east:{lat:2.12,lng:102.52,label:"Pantai Timur"}},
+  },
+  "Negeri Sembilan": {
+    "NGS01 - Tampin, Jempol": {
+      zone:"NGS01",tz:8,
+      west:{lat:2.47,lng:102.03,label:"Tampin"},
+      east:{lat:3.26,lng:102.42,label:"Jempol"}},
+    "NGS02 - Jelebu, Kuala Pilah, Rembau": {
+      zone:"NGS02",tz:8,
+      west:{lat:3.08,lng:101.83,label:"Jelebu"},
+      east:{lat:2.72,lng:102.27,label:"Kuala Pilah"}},
+    "NGS03 - Port Dickson, Seremban": {
+      zone:"NGS03",tz:8,
+      west:{lat:2.53,lng:101.72,label:"Port Dickson"},
+      east:{lat:2.82,lng:101.95,label:"Seremban"}},
+  },
+  "Pahang": {
+    "PHG01 - Pulau Tioman": {
+      zone:"PHG01",tz:8,
+      west:{lat:2.80,lng:104.12,label:"P.Tioman Barat"},
+      east:{lat:2.80,lng:104.22,label:"P.Tioman Timur"}},
+    "PHG02 - Kuantan, Pekan, Muadzam Shah, Rompin": {
+      zone:"PHG02",tz:8,
+      west:{lat:3.42,lng:102.75,label:"Muadzam Shah"},
+      east:{lat:3.97,lng:103.40,label:"Kuantan"}},
+    "PHG03 - Jerantut, Temerloh, Maran, Bera, Chenor, Jengka": {
+      zone:"PHG03",tz:8,
+      west:{lat:3.45,lng:102.00,label:"Bera Barat"},
+      east:{lat:3.97,lng:102.82,label:"Maran"}},
+    "PHG04 - Bentong, Lipis, Raub": {
+      zone:"PHG04",tz:8,
+      west:{lat:3.53,lng:101.68,label:"Bentong"},
+      east:{lat:4.18,lng:102.05,label:"Kuala Lipis"}},
+    "PHG05 - Genting Sempah, Janda Baik, Bukit Tinggi": {
+      zone:"PHG05",tz:8,elev:800,
+      west:{lat:3.40,lng:101.72,label:"Genting Sempah"},
+      east:{lat:3.68,lng:101.87,label:"Bukit Tinggi"}},
+    "PHG06 - Cameron Highlands, Genting Highlands, Bukit Fraser": {
+      zone:"PHG06",tz:8,elev:1500,
+      west:{lat:3.30,lng:101.37,label:"Bukit Fraser"},
+      east:{lat:4.48,lng:101.42,label:"Cameron Highlands"}},
+  },
+  "Perak": {
+    "PRK01 - Tapah, Slim River, Tanjung Malim": {
+      zone:"PRK01",tz:8,
+      west:{lat:3.70,lng:101.08,label:"Tanjung Malim"},
+      east:{lat:4.20,lng:101.47,label:"Tapah"}},
+    "PRK02 - Kuala Kangsar, Sg.Siput, Ipoh, Batu Gajah, Kampar": {
+      zone:"PRK02",tz:8,
+      west:{lat:4.45,lng:100.73,label:"Larut Barat"},
+      east:{lat:4.77,lng:101.20,label:"Kuala Kangsar"}},
+    "PRK03 - Lenggong, Pengkalan Hulu, Grik": {
+      zone:"PRK03",tz:8,
+      west:{lat:5.20,lng:100.87,label:"Lenggong"},
+      east:{lat:5.45,lng:101.30,label:"Grik"}},
+    "PRK04 - Temengor, Belum": {
+      zone:"PRK04",tz:8,
+      west:{lat:5.33,lng:101.22,label:"Temengor"},
+      east:{lat:5.72,lng:101.55,label:"Belum"}},
+    "PRK05 - Teluk Intan, Bagan Datuk, Seri Iskandar, Kg.Gajah, Lumut": {
+      zone:"PRK05",tz:8,
+      west:{lat:3.88,lng:100.75,label:"Bagan Datuk"},
+      east:{lat:4.05,lng:101.07,label:"Seri Iskandar"}},
+    "PRK06 - Selama, Taiping, Parit Buntar, Bagan Serai": {
+      zone:"PRK06",tz:8,
+      west:{lat:5.05,lng:100.50,label:"Parit Buntar"},
+      east:{lat:5.65,lng:100.98,label:"Selama"}},
+    "PRK07 - Bukit Larut": {
+      zone:"PRK07",tz:8,elev:1000,
+      west:{lat:4.87,lng:100.80,label:"Bukit Larut"},
+      east:{lat:4.87,lng:100.80,label:"Bukit Larut"}},
+  },
+  "Perlis": {
+    "PLS01 - Kangar, Padang Besar, Arau": {
+      zone:"PLS01",tz:8,
+      west:{lat:6.45,lng:100.08,label:"Kuala Perlis"},
+      east:{lat:6.72,lng:100.37,label:"Padang Besar"}},
+  },
+  "Pulau Pinang": {
+    "PNG01 - Seberang Perai, Pulau Pinang": {
+      zone:"PNG01",tz:8,
+      west:{lat:5.42,lng:100.18,label:"P.Pinang Barat"},
+      east:{lat:5.42,lng:100.57,label:"Seberang Perai Timur"}},
+  },
+  "Sabah": {
+    "SBH01 - Sandakan Timur, Bukit Garam, Semawang, Temanggong, Tambisan, Sukau": {
+      zone:"SBH01",tz:8,
+      west:{lat:5.43,lng:117.82,label:"Bukit Garam"},
+      east:{lat:5.72,lng:118.20,label:"Tambisan"}},
+    "SBH02 - Sandakan Barat, Beluran, Telupid, Kuamut": {
+      zone:"SBH02",tz:8,
+      west:{lat:5.70,lng:117.50,label:"Beluran"},
+      east:{lat:5.85,lng:118.13,label:"Sandakan Barat"}},
+    "SBH03 - Lahad Datu, Kunak, Silabukan, Tungku, Sahabat, Semporna": {
+      zone:"SBH03",tz:8,
+      west:{lat:5.08,lng:117.57,label:"Lahad Datu"},
+      east:{lat:4.48,lng:118.62,label:"Semporna"}},
+    "SBH04 - Bandar Tawau, Balong, Merotai, Kalabakan, Tawau Barat/Timur": {
+      zone:"SBH04",tz:8,
+      west:{lat:4.60,lng:117.60,label:"Kalabakan"},
+      east:{lat:4.25,lng:118.12,label:"Bandar Tawau"}},
+    "SBH05 - Kudat, Kota Marudu, Pitas, Pulau Banggi": {
+      zone:"SBH05",tz:8,
+      west:{lat:6.52,lng:116.60,label:"Kota Marudu"},
+      east:{lat:7.25,lng:117.33,label:"P.Banggi"}},
+    "SBH06 - Gunung Kinabalu": {
+      zone:"SBH06",tz:8,elev:3000,
+      west:{lat:6.10,lng:116.55,label:"G.Kinabalu"},
+      east:{lat:6.10,lng:116.55,label:"G.Kinabalu"}},
+    "SBH07 - Kota Kinabalu, Ranau, Tuaran, Penampang, Papar, Putatan, Kota Belud": {
+      zone:"SBH07",tz:8,
+      west:{lat:5.87,lng:115.73,label:"Papar"},
+      east:{lat:6.35,lng:116.70,label:"Kota Belud"}},
+    "SBH08 - Keningau, Tambunan, Nabawan, Pensiangan": {
+      zone:"SBH08",tz:8,
+      west:{lat:4.73,lng:115.85,label:"Nabawan"},
+      east:{lat:5.46,lng:116.22,label:"Tambunan"}},
+    "SBH09 - Beaufort, Sipitang, Tenom, Membakut, Kuala Penyu, Weston, Long Pa Sia": {
+      zone:"SBH09",tz:8,
+      west:{lat:5.08,lng:115.48,label:"Sipitang"},
+      east:{lat:5.10,lng:115.97,label:"Tenom"}},
+  },
+  "Sarawak": {
+    "SWK01 - Limbang, Lawas, Sundar, Terusan": {
+      zone:"SWK01",tz:8,
+      west:{lat:4.73,lng:114.77,label:"Sundar"},
+      east:{lat:5.00,lng:115.42,label:"Lawas"}},
+    "SWK02 - Miri, Niah, Bekenu, Sibuti, Marudi, Belaga": {
+      zone:"SWK02",tz:8,
+      west:{lat:3.72,lng:113.73,label:"Subis/Bekenu"},
+      east:{lat:4.40,lng:114.33,label:"Marudi"}},
+    "SWK03 - Bintulu, Tatau, Sebauh, Song, Balingian, Kapit": {
+      zone:"SWK03",tz:8,
+      west:{lat:2.02,lng:112.53,label:"Song"},
+      east:{lat:3.25,lng:113.23,label:"Bintulu"}},
+    "SWK04 - Sibu, Dalat, Oya, Igan, Kanowit": {
+      zone:"SWK04",tz:8,
+      west:{lat:2.33,lng:111.45,label:"Igan/Oya"},
+      east:{lat:2.33,lng:112.07,label:"Kanowit"}},
+    "SWK05 - Sarikei, Julau, Bitangor, Rajang, Belawai, Matu, Daro": {
+      zone:"SWK05",tz:8,
+      west:{lat:2.25,lng:111.43,label:"Matu/Daro"},
+      east:{lat:2.12,lng:111.98,label:"Sarikei"}},
+    "SWK06 - Sri Aman, Betong, Spaoh, Pusa, Saratok, Roban, Debak, Kabong, Lingga, Engkelili": {
+      zone:"SWK06",tz:8,
+      west:{lat:1.23,lng:111.10,label:"Lubuk Antu"},
+      east:{lat:1.55,lng:111.82,label:"Betong"}},
+    "SWK07 - Samarahan, Simunjan, Serian, Sebuyau, Meludam": {
+      zone:"SWK07",tz:8,
+      west:{lat:1.52,lng:110.28,label:"Tebedu"},
+      east:{lat:1.48,lng:110.60,label:"Asajaya"}},
+    "SWK08 - Kuching, Bau, Lundu, Sematan": {
+      zone:"SWK08",tz:8,
+      west:{lat:1.80,lng:109.63,label:"Sematan"},
+      east:{lat:1.55,lng:110.50,label:"Kuching"}},
+    "SWK09 - Zon Khas (Kawasan Khas)": {
+      zone:"SWK09",tz:8,
+      west:{lat:1.50,lng:110.25,label:"Zon Khas Barat"},
+      east:{lat:1.50,lng:110.42,label:"Zon Khas Timur"}},
+  },
+  "Selangor": {
+    "SGR01 - Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, Shah Alam": {
+      zone:"SGR01",tz:8,
+      west:{lat:3.13,lng:101.38,label:"Kapar/Klang"},
+      east:{lat:3.65,lng:101.92,label:"Hulu Selangor"}},
+    "SGR02 - Kuala Selangor, Sabak Bernam": {
+      zone:"SGR02",tz:8,
+      west:{lat:3.63,lng:100.98,label:"Sabak Bernam"},
+      east:{lat:3.35,lng:101.42,label:"Kuala Selangor"}},
+    "SGR03 - Klang, Kuala Langat": {
+      zone:"SGR03",tz:8,
+      west:{lat:2.90,lng:101.18,label:"Banting"},
+      east:{lat:3.05,lng:101.57,label:"Klang"}},
+  },
+  "Terengganu": {
+    "TRG01 - Kuala Terengganu, Marang, Kuala Nerus": {
+      zone:"TRG01",tz:8,
+      west:{lat:5.31,lng:102.83,label:"Marang"},
+      east:{lat:5.35,lng:103.20,label:"Kuala Terengganu"}},
+    "TRG02 - Besut, Setiu": {
+      zone:"TRG02",tz:8,
+      west:{lat:5.42,lng:102.40,label:"Setiu"},
+      east:{lat:5.70,lng:102.83,label:"Besut"}},
+    "TRG03 - Hulu Terengganu": {
+      zone:"TRG03",tz:8,
+      west:{lat:4.97,lng:102.55,label:"Hulu Trg Barat"},
+      east:{lat:5.10,lng:103.02,label:"Hulu Trg Timur"}},
+    "TRG04 - Kemaman, Dungun": {
+      zone:"TRG04",tz:8,
+      west:{lat:4.27,lng:103.03,label:"Dungun"},
+      east:{lat:4.23,lng:103.50,label:"Kemaman"}},
+  },
+  "W.P. Kuala Lumpur & Putrajaya": {
+    "WLY01 - Kuala Lumpur, Putrajaya": {
+      zone:"WLY01",tz:8,
+      west:{lat:3.14,lng:101.58,label:"KL Barat"},
+      east:{lat:2.92,lng:101.75,label:"Putrajaya"}},
+  },
+  "W.P. Labuan": {
+    "WLY02 - Labuan": {
+      zone:"WLY02",tz:8,
+      west:{lat:5.28,lng:115.17,label:"Labuan Barat"},
+      east:{lat:5.35,lng:115.28,label:"Labuan Timur"}},
+  },
+};
+
+// ═══════════════════════════════════════════════════════
+//  PRAYER CALCULATION
+//  Formula: Rinto Anugraha "Mekanika Benda Langit"
+//
+//  IHTIYATI (precautionary margins) confirmed by cross-checking
+//  against JAKIM e-solat published times:
+//    Imsak:   raw astronomical − 10 min (10 min before Subuh)
+//    Subuh:   raw + 10 min, floor
+//    Syuruk:  raw + 0 min, floor
+//    Zohor:   raw + 2 min, floor
+//    Asar:    raw + 3 min, floor
+//    Maghrib: raw + 1 min, floor
+//    Isyak:   raw + 2 min, floor
+// ═══════════════════════════════════════════════════════
+const R = Math.PI/180;
+const sinD = d => Math.sin(d*R);
+const cosD = d => Math.cos(d*R);
+const tanD = d => Math.tan(d*R);
+const acosD= x => Math.acos(x)/R;
+const atanD= x => Math.atan(x)/R;
+
+function julianDate(y,m,d){
+  if(m<=2){y--;m+=12;}
+  const A=Math.floor(y/100), B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;
+}
+
+function sunDeclAndEoT(jd){
+  // T in RADIANS — Anugraha's series uses T*rad-to-deg conversion inside sinD
+  const T = 2*Math.PI*(jd-2451545)/365.25;
+  // sinD argument: 57.297*T converts T (radians) to degrees for sinD function
+  const DELTA = 0.37877
+    + 23.264 * sinD(57.297*T - 79.547)
+    + 0.3812 * sinD(2*57.297*T - 82.682)
+    + 0.17132* sinD(3*57.297*T - 59.722);
+  const U  = (jd-2451545)/36525;
+  const L0 = 280.46607 + 36000.7698*U;
+  const ET = (-(1789+237*U)*sinD(L0) - (7146-62*U)*cosD(L0)
+              +(9934-14*U)*sinD(2*L0) - (29+5*U)*cosD(2*L0)
+              +(74+10*U)*sinD(3*L0)   + (320-4*U)*cosD(3*L0)
+              - 212*sinD(4*L0)) / 1000;
+  return {DELTA, ET};
+}
+
+function hourAngle(lat, delta, alt){
+  const c = (sinD(alt) - sinD(lat)*sinD(delta)) / (cosD(lat)*cosD(delta));
+  if(c < -1 || c > 1) return null;
+  return acosD(c);
+}
+
+// Returns decimal hours for each prayer including ihtiyati
+function calcTimes(date, lat, lng, tz, elev){
+  elev = elev || 10;
+  const jd = julianDate(date.getFullYear(), date.getMonth()+1, date.getDate());
+  const {DELTA, ET} = sunDeclAndEoT(jd);
+  const TT = 12 + tz - (lng/15) - (ET/60);  // solar transit
+  const SA_HOR = -0.8333 - 0.0347*Math.sqrt(elev);
+  const SA_ASR = atanD(1 / (1 + tanD(Math.abs(lat - DELTA))));
+
+  const HA_F = hourAngle(lat, DELTA, -18);  // MKI Ke-116, Nov 2019: sudut Subuh Malaysia ialah 18°
+  const HA_S = hourAngle(lat, DELTA, SA_HOR);
+  const HA_A = hourAngle(lat, DELTA, SA_ASR);
+  const HA_I = hourAngle(lat, DELTA, -18);
+
+  const raw_fajr    = HA_F ? TT - HA_F/15 : null;  // HA_F computed at -18°
+  const raw_syuruk  = HA_S ? TT - HA_S/15 : null;
+  const raw_asr     = HA_A ? TT + HA_A/15 : null;
+  const raw_maghrib = HA_S ? TT + HA_S/15 : null;
+  const raw_isyak   = HA_I ? TT + HA_I/15 : null;
+
+  // Apply ihtiyati and floor to minute (JAKIM's method)
+  const applyIht = (raw, iht) => raw !== null ? Math.floor((raw + iht/60)*60) : null;
+
+  const fajr_min    = applyIht(raw_fajr,     2);  // 18°: ihtiyati 2 min sahaja
+  const imsak_min   = fajr_min !== null ? fajr_min - 10 : null;  // Imsak = 10 min sebelum Subuh
+  const syuruk_min  = applyIht(raw_syuruk,   0);
+  const dhuhr_min   = Math.floor((TT + 2/60)*60);
+  const asr_min     = applyIht(raw_asr,       3);
+  const maghrib_min = applyIht(raw_maghrib,   1);
+  const isyak_min   = applyIht(raw_isyak,     2);
+
+  return { imsak:imsak_min, fajr:fajr_min, syuruk:syuruk_min,
+           dhuhr:dhuhr_min, asr:asr_min, maghrib:maghrib_min, isyak:isyak_min };
+  // All values are INTEGER MINUTES from midnight (local time)
+}
+
+// Format integer minutes → "HH:MM"
+function fmtMin(m){
+  if(m === null || isNaN(m)) return '--:--';
+  m = ((m % 1440) + 1440) % 1440;
+  return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+}
+
+// Diff string between two minute values
+function diffStr(wMin, eMin){
+  if(wMin === null || eMin === null) return '';
+  const d = eMin - wMin;
+  if(d === 0) return '';
+  return d > 0 ? `−${d}m` : `+${Math.abs(d)}m`;
+  // east is east = more longitude = earlier time = smaller minute value = negative diff
+}
+
+// ═══════════════════════════════════════════════════════
+//  HIJRI DATE
+// ═══════════════════════════════════════════════════════
+function toHijri(date){
+  const jd=Math.floor(julianDate(date.getFullYear(),date.getMonth()+1,date.getDate()))+0.5;
+  const l=jd-1948440+10632, n=Math.floor((l-1)/10631);
+  const l2=l-10631*n+354;
+  const j=(Math.floor((10985-l2)/5316))*(Math.floor((50*l2)/17719))+(Math.floor(l2/5670))*(Math.floor((43*l2)/15238));
+  const l3=l2-(Math.floor((30-j)/15))*(Math.floor((17719*j)/50))-(Math.floor(j/16))*(Math.floor((15238*j)/43))+29;
+  const mo=Math.floor((24*l3)/709), dy=l3-Math.floor((709*mo)/24), yr=30*n+j-30;
+  const MH=['Muharram','Safar','Rabiul Awal','Rabiul Akhir','Jamadil Awal','Jamadil Akhir','Rejab','Syaaban','Ramadan','Syawal','Zulkaedah','Zulhijjah'];
+  return `${dy} ${MH[mo-1]} ${yr}H`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════════════
+const PM = [
+  {key:'imsak',   name:'Imsak',   ar:'إمساك', icon:'🌙', dim:true },
+  {key:'fajr',    name:'Subuh',   ar:'الفجر',  icon:'🌅', dim:false},
+  {key:'syuruk',  name:'Syuruk',  ar:'الشروق', icon:'☀️', dim:true },
+  {key:'dhuhr',   name:'Zohor',   ar:'الظهر',  icon:'🌤️',dim:false},
+  {key:'asr',     name:'Asar',    ar:'العصر',  icon:'⛅', dim:false},
+  {key:'maghrib', name:'Maghrib', ar:'المغرب', icon:'🌇', dim:false},
+  {key:'isyak',   name:'Isyak',   ar:'العشاء', icon:'🌃', dim:false},
+];
+const ACTIVE = ['fajr','dhuhr','asr','maghrib','isyak'];
+let CZ = null, CI = null;
+
+function populateStates(){
+  const s = document.getElementById('stateSelect');
+  Object.keys(ZONES).forEach(st => {
+    const o = document.createElement('option');
+    o.value = st; o.textContent = st; s.appendChild(o);
+  });
+  s.value = 'Johor';
+  populateZones('Johor');
+  document.getElementById('zoneSelect').value = 'JHR02 - Johor Bahru, Kota Tinggi, Mersing, Kulai';
+  onZoneChange();
+}
+
+function populateZones(state){
+  const s = document.getElementById('zoneSelect'); s.innerHTML = '';
+  Object.keys(ZONES[state]).forEach(z => {
+    const o = document.createElement('option'); o.value = z; o.textContent = z; s.appendChild(o);
+  });
+}
+
+function onStateChange(){
+  populateZones(document.getElementById('stateSelect').value);
+  onZoneChange();
+}
+
+function onZoneChange(){
+  const st = document.getElementById('stateSelect').value;
+  const zn = document.getElementById('zoneSelect').value;
+  CZ = ZONES[st][zn]; render();
+}
+
+function nowMinutes(){
+  const n = new Date();
+  return n.getHours()*60 + n.getMinutes() + n.getSeconds()/60;
+}
+
+function render(){
+  if(!CZ) return;
+  const now  = new Date();
+  const elev = CZ.elev || 10;
+  const tW   = calcTimes(now, CZ.west.lat, CZ.west.lng, CZ.tz, elev);
+  const tE   = calcTimes(now, CZ.east.lat, CZ.east.lng, CZ.tz, elev);
+
+  // Zone info
+  document.getElementById('zoneInfo').innerHTML =
+    `Zon <b>${CZ.zone}</b> &nbsp;·&nbsp; Barat: <b>${CZ.west.label}</b> (${CZ.west.lat.toFixed(2)}°N, ${CZ.west.lng.toFixed(2)}°E) &nbsp;·&nbsp; Timur: <b>${CZ.east.label}</b> (${CZ.east.lat.toFixed(2)}°N, ${CZ.east.lng.toFixed(2)}°E)`;
+
+  // Date
+  const DAY=['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+  const MON=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+  document.getElementById('hijriDate').textContent  = toHijri(now);
+  document.getElementById('dayName').textContent    = DAY[now.getDay()];
+  document.getElementById('miladiDate').textContent = `${now.getDate()} ${MON[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Current time in minutes
+  const nm = nowMinutes();
+
+  // Active prayer (west/official times)
+  let active = null;
+  for(let i = ACTIVE.length-1; i >= 0; i--){
+    const k = ACTIVE[i];
+    if(tW[k] !== null && nm >= tW[k]) { active = k; break; }
+  }
+
+  // Next prayer
+  let nk = null, nMin = null;
+  for(let i = 0; i < ACTIVE.length; i++){
+    const k = ACTIVE[i];
+    if(tW[k] !== null && nm < tW[k]) { nk = k; nMin = tW[k]; break; }
+  }
+  if(!nk){
+    const tmr = new Date(now); tmr.setDate(tmr.getDate()+1);
+    const tw2 = calcTimes(tmr, CZ.west.lat, CZ.west.lng, CZ.tz, elev);
+    nk = 'fajr'; nMin = tw2.fajr + 1440;
+  }
+
+  // Countdown
+  if(CI) clearInterval(CI);
+  document.getElementById('nextPrayerName').textContent = PM.find(m=>m.key===nk)?.name || '—';
+  document.getElementById('nextPrayerTime').textContent = fmtMin(nMin % 1440);
+
+  function tick(){
+    const n = new Date();
+    const nowSecs = n.getHours()*3600 + n.getMinutes()*60 + n.getSeconds();
+    let diff = nMin*60 - nowSecs;
+    if(diff < 0) diff += 86400;
+    const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60), s=Math.floor(diff%60);
+    document.getElementById('countdownTimer').textContent =
+      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  tick(); CI = setInterval(tick, 1000);
+
+  // Prayer rows
+  const grid = document.getElementById('prayersGrid');
+  grid.innerHTML = '';
+  PM.forEach(pm => {
+    const isAct = pm.key === active;
+    const tw = fmtMin(tW[pm.key]);
+    const te = fmtMin(tE[pm.key]);
+    const dl = diffStr(tW[pm.key], tE[pm.key]);
+    const row = document.createElement('div');
+    row.className = 'prayer-row' + (pm.dim?' dim-row':'') + (isAct?' active':'');
+    row.innerHTML = `
+      <div class="prayer-icon">${pm.icon}</div>
+      <div class="prayer-info">
+        <span class="prayer-name-ms">${pm.name}</span>
+        <span class="prayer-name-ar">${pm.ar}</span>
+      </div>
+      <div class="t-cell">
+        <span class="t-val w">${tw}</span>
+        ${dl ? `<span class="t-diff">${dl}</span>` : ''}
+      </div>
+      <div class="t-cell"><span class="t-val e">${te}</span></div>
+      ${isAct ? '<span class="active-badge">Sekarang</span>' : ''}
+    `;
+    grid.appendChild(row);
+  });
+}
+
+populateStates();
+// Re-render at midnight
+setInterval(()=>{ const n=new Date(); if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<5) render(); }, 5000);
+</script>
+
+<!-- ════════════════ INFO MODAL ════════════════ -->
+<div class="modal-overlay" id="infoModal" onclick="handleOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <span class="modal-title">Peringatan &amp; Kaedah Pengiraan</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- PENAFIAN -->
+      <div class="psec">
+        <div class="psec-title">⚠ Penafian Penting</div>
+        <div class="warn-banner">
+          <div class="warn-icon">📋</div>
+          <div class="warn-text">
+            <b>Aplikasi ini adalah untuk panduan umum sahaja.</b> Waktu solat yang dipaparkan mungkin berbeza satu hingga dua minit daripada waktu rasmi yang diterbitkan oleh pihak berkuasa. Untuk waktu yang lebih tepat dan sah secara rasmi, sila rujuk:
+            <ul style="margin-top:6px;padding-left:16px;">
+              <li><a href="https://www.e-solat.gov.my" target="_blank">e-Solat JAKIM</a> — www.e-solat.gov.my</li>
+              <li>Majlis Agama Islam negeri masing-masing</li>
+              <li>Taqwim Solat yang diterbitkan setiap tahun</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- KONSEP ZON & TITIK RUJUKAN -->
+      <div class="psec">
+        <div class="psec-title">🗺 Zon Waktu &amp; Titik Rujukan JAKIM</div>
+        <p>Malaysia dibahagikan kepada <b>lebih 40 zon waktu solat</b> oleh JAKIM. Setiap zon merangkumi beberapa daerah yang berbeza jarak dari garisan bujur.</p>
+        <p>Prinsip utama: JAKIM menggunakan <b>titik paling barat dalam setiap zon</b> sebagai titik rujukan. Ini kerana titik barat menerima cahaya fajar paling lewat dan matahari terbenam paling awal — bermakna waktu Subuh paling lewat dan waktu Maghrib paling awal bagi seluruh zon. Ini memastikan seluruh penduduk zon tersebut <b>selamat untuk berimsak</b> secara serentak.</p>
+        <p>Sebab itulah aplikasi ini memaparkan <b>dua lajur</b>:</p>
+        <ul>
+          <li><b style="color:var(--gold-light);">Barat (◀)</b> — waktu rasmi zon, berdasarkan sempadan barat. Ini yang JAKIM gunakan.</li>
+          <li><b style="color:var(--teal-light);">Timur (▶)</b> — waktu di sempadan timur zon. Subuh lebih awal, Maghrib lebih lewat berbanding kolum Barat.</li>
+        </ul>
+        <p>Perbezaan boleh mencecah <b>5–15 minit</b> bagi zon yang luas seperti di Sabah, Sarawak dan Pahang dalaman.</p>
+      </div>
+
+      <!-- IHTIYATI -->
+      <div class="psec">
+        <div class="psec-title">⏱ Ihtiyati — Margin Berjaga-jaga</div>
+        <p><b>Ihtiyati</b> (الاحتياط) bermaksud langkah berjaga-jaga. Dalam pengiraan waktu solat, nilai astronomik tulen ditambah sedikit minit tambahan sebelum dibulatkan ke minit penuh. Tujuannya untuk memastikan setiap waktu sudah pasti masuk sebelum diisytiharkan.</p>
+        <table class="iht-table">
+          <tr><th>Waktu Solat</th><th>Kaedah</th><th>Sebab</th><th class="td-iht">Ihtiyati</th></tr>
+          <tr><td><b>Imsak</b></td><td>Subuh − 10 min</td><td>Sempadan akhir makan sahur</td><td class="td-iht">−10 min</td></tr>
+          <tr><td><b>Subuh</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Sudut 18° sudah lebih konservatif; ihtiyati kecil mencukupi</td><td class="td-iht">+2 min</td></tr>
+          <tr><td><b>Syuruk</b></td><td>raw, bulatkan ke bawah</td><td>Tamat waktu solat Subuh</td><td class="td-iht">+0 min</td></tr>
+          <tr><td><b>Zohor</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Pastikan matahari sudah jelas condong</td><td class="td-iht">+2 min</td></tr>
+          <tr><td><b>Asar</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Sempadan bayang-bayang lebih selamat</td><td class="td-iht">+3 min</td></tr>
+          <tr><td><b>Maghrib</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Pastikan matahari sudah terbenam penuh</td><td class="td-iht">+1 min</td></tr>
+          <tr><td><b>Isyak</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Syafaq benar-benar hilang</td><td class="td-iht">+2 min</td></tr>
+        </table>
+        <p style="margin-top:10px;">Nilai ihtiyati ini disahkan melalui perbandingan dengan data JAKIM untuk zon JHR02 dan WLY01 pada 18 Mac 2026, menggunakan sudut Subuh <b>18°</b> yang berkuat kuasa sejak 2019 berikutan keputusan MKI Ke-116.</p>
+      </div>
+
+      <!-- KAEDAH PENGIRAAN -->
+      <div class="psec">
+        <div class="psec-title">📐 Kaedah Pengiraan Astronomik</div>
+        <p>Aplikasi ini menggunakan formula dari buku <b>Rinto Anugraha — "Mekanika Benda Langit"</b> (Universiti Gadjah Mada, Indonesia), yang menjadi rujukan utama pengiraan waktu solat di Malaysia dan Indonesia.</p>
+        <p>Langkah-langkah pengiraan:</p>
+        <ul>
+          <li><b>Julian Day (JD)</b> — tarikh ditukar kepada nombor Julian untuk memudahkan pengiraan astronomi.</li>
+          <li><b>Deklinasi Matahari (δ)</b> — sudut antara garisan khatulistiwa Bumi dan kedudukan matahari. Berubah sepanjang tahun (±23.4°). Formula siri trigonometri tiga sebutan digunakan.</li>
+          <li><b>Persamaan Masa (ET)</b> — perbezaan antara waktu matahari sebenar dan jam biasa, disebabkan orbit Bumi berbentuk elips dan paksi condong. Boleh ±16 minit. Formula tujuh sebutan digunakan.</li>
+          <li><b>Waktu Transit (Zohor)</b> — matahari di puncak meridian tempatan: <code>TT = 12 + zon_masa − (bujur÷15) − (ET÷60)</code></li>
+          <li><b>Sudut Waktu (Hour Angle)</b> — sudut matahari dari meridian pada ketinggian tertentu, dikira dengan formula: <code>cos H = (sin alt − sin lat · sin δ) / (cos lat · cos δ)</code></li>
+        </ul>
+        <div class="formula-box" style="margin-top:10px;">
+          <b style="color:var(--text);">Ketinggian matahari yang digunakan:</b><br>
+          Subuh / Fajr &nbsp;&nbsp;→ <code>−18°</code> (di bawah ufuk) — <b style="color:var(--gold-light)">keputusan MKI Ke-116, Nov 2019</b><br>
+          Syuruk / Maghrib → <code>−0.833° − 0.0347√h</code> (h = ketinggian tempat, meter)<br>
+          Asar (Syafii) &nbsp;→ <code>arctan(1 / (1 + tan|lat−δ|))</code><br>
+          Isyak &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <code>−18°</code> (di bawah ufuk) — standard JAKIM
+        </div>
+        <p style="margin-top:10px;">Fajr/Isyak menggunakan ketinggian negatif kerana matahari masih di bawah ufuk. Kedua-duanya ialah <b>sudut senja astronomi</b> yang menentukan gelap-terang langit. Sudut Subuh 18° adalah <b>lebih lewat</b> daripada 20° (lebih cerah, lebih selamat untuk imsak), menghasilkan waktu Subuh ~8 minit lebih lewat.</p>
+      </div>
+
+      <!-- PERKARA TEKNIKAL LAIN -->
+      <div class="psec">
+        <div class="psec-title">🔍 Isu &amp; Penemuan Teknikal</div>
+        <p>Semasa membangunkan aplikasi ini, beberapa isu menarik ditemui:</p>
+        <ul>
+          <li><b>Ralat formula asal:</b> Formula deklinasi Anugraha menggunakan T dalam radian, di mana argumen <code>sinD(57.297 × T)</code> menukar radian ke darjah secara tersirat. Menggunakan T dalam darjah secara salah menghasilkan Subuh 12–15 minit terlalu awal.</li>
+          <li><b>Sudut Subuh 18°, bukan 20°:</b> Pada November 2019, Muzakarah MKI Ke-116 memutuskan sudut Subuh Malaysia bertukar dari 20° kepada <b>18°</b> berikutan kajian setahun oleh JAKIM, UM, UniSZA dan UiTM. Perubahan ini menambah ~8 minit kepada waktu Subuh. Perbezaan tepat 8 minit antara dua sudut ini mengesahkan penemuan tersebut secara matematik. Rujukan: <a href="https://muftiwp.gov.my/ms/artikel/bayan-linnas/3858-" target="_blank">Bayan Linnas Khas, Jabatan Mufti WP (6 Dis 2019)</a>.</li>
+          <li><b>Ihtiyati Subuh hanya +2 minit:</b> Dengan sudut 18° yang sudah lebih selamat/lewat, ihtiyati yang diperlukan hanyalah 2 minit (bukan 10 minit seperti jika menggunakan 20°). Kesimpulan asal +10 minit adalah gabungan ralat sudut + ihtiyati yang tersalah dikira sebagai ihtiyati semata-mata.</li>
+          <li><b>Koordinat zon bukan titik tengah:</b> Menggunakan koordinat tengah bandar (seperti Johor Bahru) memberi waktu yang berbeza daripada JAKIM. Titik rujukan JAKIM ialah sempadan barat zon, bukan pusat penduduk.</li>
+          <li><b>Asar berbeza mazhab:</b> Mazhab Syafii (digunakan di Malaysia) mengira Asar apabila bayang-bayang sesuatu objek sama panjang dengan objek <i>ditambah</i> bayang-bayang tengah hari. Mazhab Hanafi menggunakan dua kali panjang — ini boleh menjadikan Asar 30–60 minit lebih lewat.</li>
+          <li><b>Pembetulan ketinggian tempat:</b> Kawasan tinggi seperti Cameron Highlands (±1500m) dan Gunung Kinabalu (±3000m) mempunyai Syuruk lebih awal dan Maghrib lebih lewat kerana ufuk efektif lebih rendah. Formula: tambah <code>0.0347√h</code> darjah kepada sudut ufuk.</li>
+        </ul>
+      </div>
+
+      <!-- TARIKH HIJRI -->
+      <div class="psec">
+        <div class="psec-title">🌙 Tarikh Hijri</div>
+        <p>Tarikh Hijri dipaparkan menggunakan <b>algoritma tabular</b> berdasarkan Julian Day, yang menganggap bulan bermula secara tetap 29.5 hari. Kaedah ini boleh berbeza <b>1–2 hari</b> daripada takwim rukyah (cerapan anak bulan) yang digunakan secara rasmi di Malaysia.</p>
+        <p>Untuk tarikh Hijri rasmi Malaysia, sila rujuk <a href="https://www.islam.gov.my" target="_blank">JAKIM</a> atau Majlis Agama negeri.</p>
+      </div>
+
+
+      <!-- SKRIP PEMBANGUNAN -->
+      <div class="psec">
+        <div class="psec-title">🔧 Skrip Pembangunan (Dev Tools)</div>
+        <p>Semasa membangunkan aplikasi ini, beberapa skrip interaktif digunakan untuk mengesahkan pengiraan berbanding data JAKIM. Skrip-skrip ini tersedia dalam fail berasingan sebagai rujukan pembelajaran:</p>
+        <ul>
+          <li><b>Tab 1 — Perbandingan JAKIM:</b> Masukkan waktu JAKIM untuk mana-mana zon dan tarikh, bandingkan dengan hasil pengiraan tempatan secara langsung.</li>
+          <li><b>Tab 2 — Probe Koordinat:</b> Imbas julat latitud/longitud untuk mencari titik yang menghasilkan waktu sasaran — cara kami mengesahkan titik rujukan barat setiap zon.</li>
+          <li><b>Tab 3 — Probe Ihtiyati:</b> Cari kombinasi ihtiyati yang paling hampir dengan data JAKIM secara automatik — cara nilai +10m Subuh, +2m Zohor dll ditemui.</li>
+          <li><b>Tab 4 — Fetch JAKIM API:</b> Ambil data langsung dari API e-Solat JAKIM untuk dijadikan rujukan. Termasuk skrip Node.js untuk elak sekatan CORS.</li>
+          <li><b>Tab 5 — Kod Sumber:</b> Semua skrip Node.js asal yang dijalankan dalam terminal semasa sesi pembangunan, dengan ulasan terperinci.</li>
+        </ul>
+        <p style="margin-top:10px;">
+          <a href="waktu-solat-devtools.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(42,122,114,.15);border:1px solid rgba(42,122,114,.35);border-radius:6px;padding:8px 14px;color:var(--teal-light);text-decoration:none;font-size:13px;font-weight:600;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Buka Dev Tools
+          </a>
+        </p>
+      </div>
+
+    </div><!-- /modal-body -->
+  </div><!-- /modal-box -->
+</div><!-- /modal-overlay -->
+
+<script>
+function openModal(){ document.getElementById('infoModal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(){ document.getElementById('infoModal').classList.remove('open'); document.body.style.overflow=''; }
+function handleOverlayClick(e){ if(e.target===document.getElementById('infoModal')) closeModal(); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+</script>
+
+</body>
+</html>

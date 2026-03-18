@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Tools — Waktu Solat Cross-Check</title>
+<style>
+:root {
+  --ink:#0d1117; --panel:#161e27; --card:#1c2733; --border:rgba(180,145,80,0.2);
+  --gold:#c9a84c; --gold-light:#e8c97a; --gold-dim:rgba(201,168,76,0.12);
+  --teal:#2a7a72; --teal-light:#3da99f;
+  --green:rgba(80,200,120,0.85); --green-dim:rgba(80,200,120,0.12);
+  --red:rgba(220,90,90,0.85);   --red-dim:rgba(220,90,90,0.12);
+  --text:#e8e0d0; --text-dim:rgba(232,224,208,0.6); --text-muted:rgba(232,224,208,0.35);
+  --r:10px; --mono:'Courier New',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ink);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;padding:20px;}
+#wrap{max-width:900px;margin:0 auto;}
+
+h1{font-size:18px;color:var(--gold);margin-bottom:4px;font-weight:600;}
+.subtitle{color:var(--text-dim);font-size:13px;margin-bottom:24px;}
+.subtitle a{color:var(--teal-light);text-decoration:none;}
+
+h2{font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.tool-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:20px;}
+.tool-desc{color:var(--text-dim);font-size:13px;margin-bottom:14px;line-height:1.6;}
+.tool-desc b{color:var(--text);}
+.tool-desc code{font-family:var(--mono);font-size:11.5px;background:var(--gold-dim);color:var(--gold-light);padding:1px 5px;border-radius:3px;}
+
+label{display:block;font-size:12px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;margin-top:10px;}
+label:first-of-type{margin-top:0;}
+input,select{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:7px 10px;width:100%;outline:none;font-family:inherit;}
+input:focus,select:focus{border-color:var(--gold);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+
+button{background:var(--teal);border:none;color:#fff;font-size:13px;padding:8px 18px;border-radius:6px;cursor:pointer;margin-top:12px;font-weight:600;transition:background .2s;}
+button:hover{background:var(--teal-light);}
+button.sec{background:var(--card);border:1px solid var(--border);color:var(--text-dim);}
+button.sec:hover{border-color:var(--gold);color:var(--gold);}
+
+.output{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px;margin-top:14px;font-family:var(--mono);font-size:12px;line-height:1.9;min-height:60px;white-space:pre-wrap;word-break:break-all;}
+.output .ok{color:var(--green);}
+.output .warn{color:#f0c060;}
+.output .err{color:var(--red);}
+.output .hdr{color:var(--gold);font-weight:bold;}
+.output .dim{color:var(--text-muted);}
+.output .val{color:var(--gold-light);}
+
+.note{font-size:12px;color:var(--text-muted);margin-top:8px;font-style:italic;}
+
+/* comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;}
+.cmp-table th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.cmp-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--mono);}
+.cmp-table tr:last-child td{border-bottom:none;}
+.match{color:var(--green);}
+.near{color:#f0c060;}
+.miss{color:var(--red);}
+.cmp-label{color:var(--text-dim);}
+
+/* log */
+.log{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px;font-family:var(--mono);font-size:11.5px;max-height:220px;overflow-y:auto;line-height:1.7;}
+.log-info{color:var(--teal-light);}
+.log-ok{color:var(--green);}
+.log-warn{color:#f0c060;}
+.log-err{color:var(--red);}
+.log-dim{color:var(--text-muted);}
+
+/* tabs */
+.tabs{display:flex;gap:2px;margin-bottom:16px;}
+.tab{background:var(--card);border:1px solid var(--border);border-radius:6px 6px 0 0;padding:7px 16px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--text-muted);border-bottom-color:var(--panel);}
+.tab.active{background:var(--panel);color:var(--gold);border-color:var(--border);border-bottom-color:var(--panel);}
+.tab-content{display:none;}.tab-content.active{display:block;}
+
+/* source viewer */
+.src-block{background:#0a0f16;border:1px solid var(--border);border-radius:6px;padding:14px;font-family:var(--mono);font-size:11.5px;line-height:1.75;overflow-x:auto;margin-top:10px;white-space:pre;}
+.kw{color:#7fb3ff;}.fn{color:#e8c97a;}.cm{color:#4a6070;font-style:italic;}.st{color:#a8d8a8;}.num{color:#c9a84c;}
+</style>
+</head>
+<body>
+<div id="wrap">
+
+<h1>🔧 Dev Tools — Waktu Solat Malaysia</h1>
+<p class="subtitle">Skrip pembantu yang digunakan semasa pembangunan aplikasi <a href="waktu-solat.html">waktu-solat.html</a> untuk mengesahkan ketepatan pengiraan berbanding data JAKIM.</p>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('t1',this)">1 · Perbandingan JAKIM</div>
+  <div class="tab" onclick="showTab('t2',this)">2 · Probe Koordinat</div>
+  <div class="tab" onclick="showTab('t3',this)">3 · Probe Ihtiyati</div>
+  <div class="tab" onclick="showTab('t4',this)">4 · Fetch JAKIM API</div>
+  <div class="tab" onclick="showTab('t5',this)">5 · Kod Sumber Dev</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 1 — PERBANDINGAN: Kiraan vs JAKIM
+═══════════════════════════════════════════════════════ -->
+<div id="t1" class="tab-content active">
+<div class="tool-card">
+  <h2>Perbandingan Pengiraan vs Data JAKIM</h2>
+  <p class="tool-desc">
+    Masukkan waktu JAKIM yang diterbitkan untuk sesuatu zon dan tarikh, kemudian bandingkan dengan hasil pengiraan tempatan. Perbezaan ≤1 minit dianggap <b class="ok">padanan</b>, 2 minit <b class="warn">hampir</b>, ≥3 minit <b class="err">berbeza</b>.
+  </p>
+  <div class="row3">
+    <div><label>Tarikh</label><input type="date" id="cmp-date"></div>
+    <div><label>Latitud</label><input type="number" id="cmp-lat" value="1.48" step="0.01" placeholder="1.48"></div>
+    <div><label>Longitud</label><input type="number" id="cmp-lng" value="103.62" step="0.01" placeholder="103.62"></div>
+  </div>
+  <div class="row4" style="margin-top:10px;">
+    <div><label>Zon Masa (UTC+)</label><input type="number" id="cmp-tz" value="8" step="0.5"></div>
+    <div><label>Ketinggian (m)</label><input type="number" id="cmp-elev" value="10" step="10"></div>
+    <div><label>Ihtiyati Subuh (min)</label><input type="number" id="cmp-iht-fajr" value="2"></div>
+    <div><label>Ihtiyati Isyak (min)</label><input type="number" id="cmp-iht-isha" value="2"></div>
+  </div>
+  <p style="margin-top:12px;font-size:12px;color:var(--text-muted);">Waktu JAKIM (HH:MM) — kosongkan jika tidak tahu:</p>
+  <div class="row4" style="margin-top:6px;">
+    <div><label>Subuh</label><input type="text" id="jakim-fajr" placeholder="06:03" maxlength="5"></div>
+    <div><label>Zohor</label><input type="text" id="jakim-dhuhr" placeholder="13:16" maxlength="5"></div>
+    <div><label>Asar</label><input type="text" id="jakim-asr" placeholder="16:21" maxlength="5"></div>
+    <div><label>Maghrib</label><input type="text" id="jakim-maghrib" placeholder="19:18" maxlength="5"></div>
+  </div>
+  <div class="row2" style="margin-top:10px;">
+    <div><label>Isyak</label><input type="text" id="jakim-isha" placeholder="20:27" maxlength="5"></div>
+    <div><label>Imsak (pilihan)</label><input type="text" id="jakim-imsak" placeholder="05:53" maxlength="5"></div>
+  </div>
+  <button onclick="runComparison()">▶ Jalankan Perbandingan</button>
+  <div id="cmp-out" class="output" style="display:none;"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 2 — PROBE KOORDINAT
+═══════════════════════════════════════════════════════ -->
+<div id="t2" class="tab-content">
+<div class="tool-card">
+  <h2>Probe Koordinat — Cari Titik Rujukan</h2>
+  <p class="tool-desc">
+    Imbas julat latitud atau longitud untuk mencari koordinat yang menghasilkan waktu solat tertentu. Digunakan untuk <b>mengesahkan titik rujukan barat/timur</b> bagi setiap zon. Waktu sasaran adalah waktu JAKIM yang diketahui.
+  </p>
+  <div class="row2">
+    <div>
+      <label>Imbas</label>
+      <select id="probe-axis">
+        <option value="lng">Longitud (tetap lat)</option>
+        <option value="lat">Latitud (tetap lng)</option>
+      </select>
+    </div>
+    <div><label>Tarikh</label><input type="date" id="probe-date"></div>
+  </div>
+  <div class="row4" style="margin-top:10px;">
+    <div><label>Latitud tetap</label><input type="number" id="probe-lat" value="1.55" step="0.01"></div>
+    <div><label>Longitud tetap</label><input type="number" id="probe-lng" value="103.62" step="0.01"></div>
+    <div><label>Zon Masa</label><input type="number" id="probe-tz" value="8" step="0.5"></div>
+    <div><label>Ketinggian (m)</label><input type="number" id="probe-elev" value="10"></div>
+  </div>
+  <div class="row4" style="margin-top:10px;">
+    <div><label>Dari</label><input type="number" id="probe-from" value="102.5" step="0.05"></div>
+    <div><label>Hingga</label><input type="number" id="probe-to" value="104.5" step="0.05"></div>
+    <div><label>Langkah</label><input type="number" id="probe-step" value="0.05" step="0.01"></div>
+    <div><label>Sasaran Subuh (HH:MM)</label><input type="text" id="probe-target" placeholder="06:03" maxlength="5"></div>
+  </div>
+  <button onclick="runProbe()">▶ Imbas</button>
+  <div id="probe-out" class="output" style="display:none;"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 3 — PROBE IHTIYATI
+═══════════════════════════════════════════════════════ -->
+<div id="t3" class="tab-content">
+<div class="tool-card">
+  <h2>Probe Ihtiyati — Tentukan Margin Berjaga-jaga</h2>
+  <p class="tool-desc">
+    Diberi koordinat dan data JAKIM, imbas semua kombinasi ihtiyati (0–15 minit) untuk semua waktu solat dan cari set yang paling hampir dengan data JAKIM. Ini adalah cara kami mengesahkan nilai ihtiyati +10m Subuh, +2m Zohor dll.
+  </p>
+  <div class="row3">
+    <div><label>Tarikh</label><input type="date" id="iht-date"></div>
+    <div><label>Latitud</label><input type="number" id="iht-lat" value="1.48" step="0.01"></div>
+    <div><label>Longitud</label><input type="number" id="iht-lng" value="103.62" step="0.01"></div>
+  </div>
+  <div class="row2" style="margin-top:10px;">
+    <div><label>Zon Masa</label><input type="number" id="iht-tz" value="8"></div>
+    <div><label>Ketinggian (m)</label><input type="number" id="iht-elev" value="10"></div>
+  </div>
+  <p style="margin-top:12px;font-size:12px;color:var(--text-muted);">Waktu JAKIM (minit dari tengah malam — atau format HH:MM):</p>
+  <div class="row3" style="margin-top:6px;">
+    <div><label>Subuh</label><input type="text" id="iht-fajr" placeholder="06:03" maxlength="5"></div>
+    <div><label>Zohor</label><input type="text" id="iht-dhuhr" placeholder="13:16" maxlength="5"></div>
+    <div><label>Asar</label><input type="text" id="iht-asr" placeholder="16:21" maxlength="5"></div>
+    <div><label>Maghrib</label><input type="text" id="iht-maghrib" placeholder="19:18" maxlength="5"></div>
+    <div><label>Isyak</label><input type="text" id="iht-isha" placeholder="20:27" maxlength="5"></div>
+    <div><label>Imsak (pilihan)</label><input type="text" id="iht-imsak" placeholder="05:53" maxlength="5"></div>
+  </div>
+  <div class="row2" style="margin-top:10px;">
+    <div><label>Julat ihtiyati (min) — dari</label><input type="number" id="iht-min" value="0"></div>
+    <div><label>Julat ihtiyati (min) — hingga</label><input type="number" id="iht-max" value="15"></div>
+  </div>
+  <button onclick="runIhtiyatiProbe()">▶ Cari Ihtiyati Terbaik</button>
+  <div id="iht-out" class="output" style="display:none;"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 4 — FETCH JAKIM API
+═══════════════════════════════════════════════════════ -->
+<div id="t4" class="tab-content">
+<div class="tool-card">
+  <h2>Fetch Data JAKIM API (untuk Semakan Silang)</h2>
+  <p class="tool-desc">
+    Ambil data waktu solat terus dari <b>API e-Solat JAKIM</b> untuk digunakan sebagai nilai rujukan dalam perbandingan. Data ini <b>tidak</b> digunakan dalam aplikasi utama — hanya untuk pengesahan semasa pembangunan.
+    <br><br>
+    <b>Nota:</b> API JAKIM mungkin mempunyai sekatan CORS. Jika gagal dari pelayar, gunakan proksi atau jalankan dari Node.js. Skrip Node.js disediakan dalam Tab 5.
+  </p>
+
+  <div class="row2">
+    <div>
+      <label>Kod Zon JAKIM</label>
+      <select id="fetch-zone">
+        <option value="JHR01">JHR01 — P.Aur, P.Pemanggil</option>
+        <option value="JHR02" selected>JHR02 — JB, Kota Tinggi, Mersing</option>
+        <option value="JHR03">JHR03 — Kluang, Pontian</option>
+        <option value="JHR04">JHR04 — Batu Pahat, Muar</option>
+        <option value="KDH01">KDH01 — Kota Setar</option>
+        <option value="KDH06">KDH06 — Langkawi</option>
+        <option value="KTN01">KTN01 — Kota Bharu</option>
+        <option value="MLK01">MLK01 — Melaka</option>
+        <option value="NGS01">NGS01 — Jempol, Tampin</option>
+        <option value="NGS03">NGS03 — Seremban, PD</option>
+        <option value="PHG02">PHG02 — Kuantan</option>
+        <option value="PRK02">PRK02 — Ipoh</option>
+        <option value="PNG01">PNG01 — Pulau Pinang</option>
+        <option value="SBH07">SBH07 — Kota Kinabalu</option>
+        <option value="SGR01">SGR01 — Shah Alam, Petaling</option>
+        <option value="SGR03">SGR03 — Klang</option>
+        <option value="SWK08">SWK08 — Kuching</option>
+        <option value="TRG01">TRG01 — Kuala Terengganu</option>
+        <option value="WLY01">WLY01 — KL, Putrajaya</option>
+        <option value="WLY02">WLY02 — Labuan</option>
+      </select>
+    </div>
+    <div>
+      <label>Tempoh</label>
+      <select id="fetch-period">
+        <option value="today" selected>today</option>
+        <option value="week">week</option>
+        <option value="month">month</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button onclick="fetchJAKIM()">▶ Fetch dari JAKIM API</button>
+    <button class="sec" onclick="showCurlCmd()">📋 Tunjuk cURL / Node.js</button>
+  </div>
+
+  <div id="fetch-log" class="log" style="display:none;"></div>
+  <div id="fetch-result" style="display:none;"></div>
+  <div id="curl-box" style="display:none;margin-top:12px;">
+    <label>cURL</label>
+    <div class="src-block" id="curl-text"></div>
+    <label style="margin-top:10px;">Node.js (jalankan terus — tiada CORS)</label>
+    <div class="src-block" id="node-text"></div>
+  </div>
+
+  <p class="note" style="margin-top:14px;">
+    Endpoint JAKIM: <code style="font-family:monospace;font-size:11px;color:var(--gold-light);">https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&amp;period={period}&amp;zone={zone}</code>
+  </p>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 5 — KOD SUMBER DEV
+═══════════════════════════════════════════════════════ -->
+<div id="t5" class="tab-content">
+<div class="tool-card">
+  <h2>Skrip Node.js — Digunakan Semasa Pembangunan</h2>
+  <p class="tool-desc">
+    Skrip-skrip ini dijalankan terus dalam terminal Node.js untuk menyiasat punca perbezaan antara pengiraan dan data JAKIM. Salin dan jalankan dengan <code>node script.js</code>.
+  </p>
+
+  <div class="tabs" style="margin-bottom:0;">
+    <div class="tab active" onclick="showSrcTab('src1',this)" style="font-size:11px;">Probe Longitud</div>
+    <div class="tab" onclick="showSrcTab('src2',this)" style="font-size:11px;">Probe Ihtiyati</div>
+    <div class="tab" onclick="showSrcTab('src3',this)" style="font-size:11px;">Kesan Bug Formula</div>
+    <div class="tab" onclick="showSrcTab('src4',this)" style="font-size:11px;">Fetch JAKIM (Node)</div>
+  </div>
+
+  <div id="src1" class="src-block" style="margin-top:0;border-radius:0 0 6px 6px;">// <span class="cm">═══════════════════════════════════════════════════════</span>
+// <span class="cm">SKRIP 1: Probe Longitud</span>
+// <span class="cm">Tujuan: Cari koordinat yang menghasilkan Subuh = 06:03 (JHR02)</span>
+// <span class="cm">Digunakan pada: 18 Mac 2026</span>
+// <span class="cm">Penemuan: Titik rujukan bukan pusat JB (~103.75°E) tapi sempadan</span>
+// <span class="cm">          barat zon (~103.62°E, kawasan Kulai)</span>
+// <span class="cm">═══════════════════════════════════════════════════════</span>
+
+<span class="kw">function</span> <span class="fn">sinD</span>(d){ <span class="kw">return</span> Math.sin(d*Math.PI/<span class="num">180</span>); }
+<span class="kw">function</span> <span class="fn">cosD</span>(d){ <span class="kw">return</span> Math.cos(d*Math.PI/<span class="num">180</span>); }
+<span class="kw">function</span> <span class="fn">acosD</span>(x){ <span class="kw">return</span> Math.acos(x)*<span class="num">180</span>/Math.PI; }
+
+<span class="kw">function</span> <span class="fn">jd</span>(y,m,d){
+  <span class="kw">if</span>(m&lt;=<span class="num">2</span>){y--;m+=<span class="num">12</span>;}
+  <span class="kw">const</span> A=Math.floor(y/<span class="num">100</span>), B=<span class="num">2</span>-A+Math.floor(A/<span class="num">4</span>);
+  <span class="kw">return</span> Math.floor(<span class="num">365.25</span>*(y+<span class="num">4716</span>))+Math.floor(<span class="num">30.6001</span>*(m+<span class="num">1</span>))+d+B-<span class="num">1524.5</span>;
+}
+
+<span class="kw">function</span> <span class="fn">calcFajr</span>(lat, lng, tz){
+  <span class="kw">const</span> J = <span class="fn">jd</span>(<span class="num">2026</span>,<span class="num">3</span>,<span class="num">18</span>);
+  <span class="kw">const</span> T = <span class="num">2</span>*Math.PI*(J-<span class="num">2451545</span>)/<span class="num">365.25</span>;  <span class="cm">// T dalam radian</span>
+  <span class="kw">const</span> DELTA = <span class="num">0.37877</span>
+    + <span class="num">23.264</span>  * <span class="fn">sinD</span>(<span class="num">57.297</span>*T - <span class="num">79.547</span>)  <span class="cm">// 57.297 menukar radian→darjah</span>
+    + <span class="num">0.3812</span>  * <span class="fn">sinD</span>(<span class="num">2</span>*<span class="num">57.297</span>*T - <span class="num">82.682</span>)
+    + <span class="num">0.17132</span> * <span class="fn">sinD</span>(<span class="num">3</span>*<span class="num">57.297</span>*T - <span class="num">59.722</span>);
+  <span class="kw">const</span> U=<span class="fn"></span>(J-<span class="num">2451545</span>)/<span class="num">36525</span>, L0=<span class="num">280.46607</span>+<span class="num">36000.7698</span>*U;
+  <span class="kw">const</span> ET=(-(<span class="num">1789</span>+<span class="num">237</span>*U)*<span class="fn">sinD</span>(L0)-(<span class="num">7146</span>-<span class="num">62</span>*U)*<span class="fn">cosD</span>(L0)
+    +(<span class="num">9934</span>-<span class="num">14</span>*U)*<span class="fn">sinD</span>(<span class="num">2</span>*L0)-(<span class="num">29</span>+<span class="num">5</span>*U)*<span class="fn">cosD</span>(<span class="num">2</span>*L0)
+    +(<span class="num">74</span>+<span class="num">10</span>*U)*<span class="fn">sinD</span>(<span class="num">3</span>*L0)+(<span class="num">320</span>-<span class="num">4</span>*U)*<span class="fn">cosD</span>(<span class="num">3</span>*L0)
+    -<span class="num">212</span>*<span class="fn">sinD</span>(<span class="num">4</span>*L0))/<span class="num">1000</span>;
+  <span class="kw">const</span> TT = <span class="num">12</span> + tz - (lng/<span class="num">15</span>) - (ET/<span class="num">60</span>);
+  <span class="kw">const</span> cosH = (<span class="fn">sinD</span>(-<span class="num">20</span>) - <span class="fn">sinD</span>(lat)*<span class="fn">sinD</span>(DELTA)) / (<span class="fn">cosD</span>(lat)*<span class="fn">cosD</span>(DELTA));
+  <span class="kw">const</span> HA = <span class="fn">acosD</span>(cosH);
+  <span class="kw">const</span> fajrMin = Math.floor((TT - HA/<span class="num">15</span> + <span class="num">10</span>/<span class="num">60</span>) * <span class="num">60</span>);  <span class="cm">// +10min ihtiyati</span>
+  <span class="kw">const</span> h=Math.floor(fajrMin/<span class="num">60</span>), m=fajrMin%<span class="num">60</span>;
+  <span class="kw">return</span> String(h).padStart(<span class="num">2</span>,<span class="st">'0'</span>)+<span class="st">':'</span>+String(m).padStart(<span class="num">2</span>,<span class="st">'0'</span>);
+}
+
+<span class="cm">// Probe longitud 103.0 → 104.2, lat tetap 1.55, tz=8</span>
+<span class="cm">// Sasaran: 06:03 (JHR02, 18 Mac 2026)</span>
+console.log(<span class="st">'--- Probe Longitud (lat=1.55, tz=8) ---'</span>);
+<span class="kw">for</span>(<span class="kw">let</span> lng=<span class="num">103.0</span>; lng&lt;=<span class="num">104.2</span>; lng+=<span class="num">0.05</span>){
+  console.log(<span class="st">`lng=</span>${lng.toFixed(<span class="num">2</span>)}<span class="st"> → Subuh=</span>${<span class="fn">calcFajr</span>(<span class="num">1.55</span>,lng,<span class="num">8</span>)}<span class="st"> [sasaran 06:03]`</span>);
+}
+</div>
+
+  <div id="src2" class="src-block" style="display:none;margin-top:0;border-radius:0 0 6px 6px;">// <span class="cm">═══════════════════════════════════════════════════════</span>
+// <span class="cm">SKRIP 2: Probe Ihtiyati</span>
+// <span class="cm">Tujuan: Tentukan nilai ihtiyati tepat untuk setiap waktu</span>
+// <span class="cm">Input: Koordinat + waktu JAKIM yang diketahui</span>
+// <span class="cm">Output: Ihtiyati optimum yang menghasilkan semua waktu betul</span>
+// <span class="cm">Penemuan: Subuh+10, Zohor+2, Asar+3, Maghrib+1, Isyak+2</span>
+// <span class="cm">═══════════════════════════════════════════════════════</span>
+
+<span class="kw">function</span> <span class="fn">sinD</span>(d){<span class="kw">return</span> Math.sin(d*Math.PI/<span class="num">180</span>);}
+<span class="kw">function</span> <span class="fn">cosD</span>(d){<span class="kw">return</span> Math.cos(d*Math.PI/<span class="num">180</span>);}
+<span class="kw">function</span> <span class="fn">acosD</span>(x){<span class="kw">return</span> Math.acos(x)*<span class="num">180</span>/Math.PI;}
+<span class="kw">function</span> <span class="fn">atanD</span>(x){<span class="kw">return</span> Math.atan(x)*<span class="num">180</span>/Math.PI;}
+<span class="kw">function</span> <span class="fn">tanD</span>(d){<span class="kw">return</span> Math.tan(d*Math.PI/<span class="num">180</span>);}
+
+<span class="kw">function</span> <span class="fn">rawTimes</span>(lat, lng, tz, date, elev=<span class="num">10</span>){
+  <span class="kw">const</span> [y,m,d]=date;
+  <span class="kw">let</span> Y=y, M=m;
+  <span class="kw">if</span>(M&lt;=<span class="num">2</span>){Y--;M+=<span class="num">12</span>;}
+  <span class="kw">const</span> A=Math.floor(Y/<span class="num">100</span>), B=<span class="num">2</span>-A+Math.floor(A/<span class="num">4</span>);
+  <span class="kw">const</span> J=Math.floor(<span class="num">365.25</span>*(Y+<span class="num">4716</span>))+Math.floor(<span class="num">30.6001</span>*(M+<span class="num">1</span>))+d+B-<span class="num">1524.5</span>;
+  <span class="kw">const</span> T=<span class="num">2</span>*Math.PI*(J-<span class="num">2451545</span>)/<span class="num">365.25</span>;
+  <span class="kw">const</span> DELTA=<span class="num">0.37877</span>+<span class="num">23.264</span>*<span class="fn">sinD</span>(<span class="num">57.297</span>*T-<span class="num">79.547</span>)+<span class="num">0.3812</span>*<span class="fn">sinD</span>(<span class="num">2</span>*<span class="num">57.297</span>*T-<span class="num">82.682</span>)+<span class="num">0.17132</span>*<span class="fn">sinD</span>(<span class="num">3</span>*<span class="num">57.297</span>*T-<span class="num">59.722</span>);
+  <span class="kw">const</span> U=(J-<span class="num">2451545</span>)/<span class="num">36525</span>, L0=<span class="num">280.46607</span>+<span class="num">36000.7698</span>*U;
+  <span class="kw">const</span> ET=(-(<span class="num">1789</span>+<span class="num">237</span>*U)*<span class="fn">sinD</span>(L0)-(<span class="num">7146</span>-<span class="num">62</span>*U)*<span class="fn">cosD</span>(L0)+(<span class="num">9934</span>-<span class="num">14</span>*U)*<span class="fn">sinD</span>(<span class="num">2</span>*L0)-(<span class="num">29</span>+<span class="num">5</span>*U)*<span class="fn">cosD</span>(<span class="num">2</span>*L0)+(<span class="num">74</span>+<span class="num">10</span>*U)*<span class="fn">sinD</span>(<span class="num">3</span>*L0)+(<span class="num">320</span>-<span class="num">4</span>*U)*<span class="fn">cosD</span>(<span class="num">3</span>*L0)-<span class="num">212</span>*<span class="fn">sinD</span>(<span class="num">4</span>*L0))/<span class="num">1000</span>;
+  <span class="kw">const</span> TT=<span class="num">12</span>+tz-(lng/<span class="num">15</span>)-(ET/<span class="num">60</span>);
+  <span class="kw">const</span> HOR=-<span class="num">0.8333</span>-<span class="num">0.0347</span>*Math.sqrt(elev);
+  <span class="kw">const</span> ASR=<span class="fn">atanD</span>(<span class="num">1</span>/(<span class="num">1</span>+<span class="fn">tanD</span>(Math.abs(lat-DELTA))));
+  <span class="kw">const</span> ha=(alt)=>{<span class="kw">const</span> c=(<span class="fn">sinD</span>(alt)-<span class="fn">sinD</span>(lat)*<span class="fn">sinD</span>(DELTA))/(<span class="fn">cosD</span>(lat)*<span class="fn">cosD</span>(DELTA));<span class="kw">return</span> <span class="fn">acosD</span>(c);};
+  <span class="kw">return</span>{fajr:TT-<span class="fn">ha</span>(-<span class="num">20</span>)/<span class="num">15</span>,syuruk:TT-<span class="fn">ha</span>(HOR)/<span class="num">15</span>,dhuhr:TT,asr:TT+<span class="fn">ha</span>(ASR)/<span class="num">15</span>,maghrib:TT+<span class="fn">ha</span>(HOR)/<span class="num">15</span>,isyak:TT+<span class="fn">ha</span>(-<span class="num">18</span>)/<span class="num">15</span>};
+}
+
+<span class="kw">const</span> raw = <span class="fn">rawTimes</span>(<span class="num">1.48</span>, <span class="num">103.62</span>, <span class="num">8</span>, [<span class="num">2026</span>,<span class="num">3</span>,<span class="num">18</span>]);
+<span class="kw">const</span> jakim = {fajr:<span class="num">363</span>, dhuhr:<span class="num">796</span>, asr:<span class="num">981</span>, maghrib:<span class="num">1158</span>, isyak:<span class="num">1227</span>}; <span class="cm">// menit</span>
+<span class="kw">const</span> keys = [<span class="st">'fajr'</span>,<span class="st">'dhuhr'</span>,<span class="st">'asr'</span>,<span class="st">'maghrib'</span>,<span class="st">'isyak'</span>];
+
+<span class="kw">for</span>(<span class="kw">const</span> k <span class="kw">of</span> keys){
+  <span class="kw">for</span>(<span class="kw">let</span> iht=<span class="num">0</span>; iht&lt;=<span class="num">15</span>; iht++){
+    <span class="kw">const</span> result = Math.floor((raw[k] + iht/<span class="num">60</span>)*<span class="num">60</span>);
+    <span class="kw">if</span>(result === jakim[k])
+      console.log(<span class="st">`✓ </span>${k}<span class="st">: ihtiyati=</span>${iht}<span class="st">min  raw=</span>${(raw[k]*<span class="num">60</span>).toFixed(<span class="num">2</span>)}<span class="st">min  hasil=</span>${result}<span class="st">  jakim=</span>${jakim[k]}<span class="st">`</span>);
+  }
+}
+</div>
+
+  <div id="src3" class="src-block" style="display:none;margin-top:0;border-radius:0 0 6px 6px;">// <span class="cm">═══════════════════════════════════════════════════════</span>
+// <span class="cm">SKRIP 3: Mengesan Bug Formula</span>
+// <span class="cm">Tujuan: Buktikan ralat apabila T ditukar ke darjah sebelum</span>
+// <span class="cm">        dimasukkan ke sinD() dalam formula deklinasi</span>
+// <span class="cm">Bug: sinD(57.297 * T_degrees) ≠ sinD(57.297 * T_radians)</span>
+// <span class="cm">═══════════════════════════════════════════════════════</span>
+
+<span class="kw">function</span> <span class="fn">sinD</span>(d){<span class="kw">return</span> Math.sin(d*Math.PI/<span class="num">180</span>);}
+
+<span class="kw">const</span> J = <span class="num">2451545</span> + (<span class="num">2026</span>-<span class="num">2000</span>)*<span class="num">365.25</span> + <span class="num">77</span>; <span class="cm">// ~18 Mac 2026</span>
+<span class="kw">const</span> T_rad = <span class="num">2</span>*Math.PI*(J-<span class="num">2451545</span>)/<span class="num">365.25</span>; <span class="cm">// betul: radian</span>
+<span class="kw">const</span> T_deg = T_rad * <span class="num">180</span>/Math.PI;           <span class="cm">// salah: ditukar ke darjah</span>
+
+<span class="kw">const</span> delta_betul = <span class="num">0.37877</span>
+  + <span class="num">23.264</span>  * <span class="fn">sinD</span>(<span class="num">57.297</span>*T_rad - <span class="num">79.547</span>)  <span class="cm">// T dalam radian ← BETUL</span>
+  + <span class="num">0.3812</span>  * <span class="fn">sinD</span>(<span class="num">2</span>*<span class="num">57.297</span>*T_rad - <span class="num">82.682</span>)
+  + <span class="num">0.17132</span> * <span class="fn">sinD</span>(<span class="num">3</span>*<span class="num">57.297</span>*T_rad - <span class="num">59.722</span>);
+
+<span class="kw">const</span> delta_buggy = <span class="num">0.37877</span>
+  + <span class="num">23.264</span>  * <span class="fn">sinD</span>(<span class="num">57.297</span>*T_deg - <span class="num">79.547</span>)  <span class="cm">// T dalam darjah ← BUG</span>
+  + <span class="num">0.3812</span>  * <span class="fn">sinD</span>(<span class="num">2</span>*<span class="num">57.297</span>*T_deg - <span class="num">82.682</span>)
+  + <span class="num">0.17132</span> * <span class="fn">sinD</span>(<span class="num">3</span>*<span class="num">57.297</span>*T_deg - <span class="num">59.722</span>);
+
+console.log(<span class="st">'T (radian):'</span>, T_rad.toFixed(<span class="num">6</span>));
+console.log(<span class="st">'T (darjah):'</span>, T_deg.toFixed(<span class="num">4</span>));
+console.log(<span class="st">'Deklinasi BETUL :'</span>, delta_betul.toFixed(<span class="num">4</span>), <span class="st">'°  (nilai sah ~-1° untuk Mac)'</span>);
+console.log(<span class="st">'Deklinasi BUG    :'</span>, delta_buggy.toFixed(<span class="num">4</span>), <span class="st">'°  (nilai tersasar)'</span>);
+console.log(<span class="st">'Perbezaan:'</span>, (delta_betul - delta_buggy).toFixed(<span class="num">4</span>), <span class="st">'°'</span>);
+console.log(<span class="st">''</span>);
+console.log(<span class="st">'Kesan pada Subuh (JHR02, 18 Mac 2026):'</span>);
+console.log(<span class="st">'  Formula betul → ~05:54 + 10min ihtiyati = 06:04 ≈ JAKIM 06:03'</span>);
+console.log(<span class="st">'  Formula buggy → ~05:39 + 10min ihtiyati = 05:49 ← jauh berbeza'</span>);
+</div>
+
+  <div id="src4" class="src-block" style="display:none;margin-top:0;border-radius:0 0 6px 6px;">// <span class="cm">═══════════════════════════════════════════════════════</span>
+// <span class="cm">SKRIP 4: Fetch Data JAKIM API (Node.js)</span>
+// <span class="cm">Tujuan: Ambil waktu solat JAKIM untuk dijadikan data rujukan</span>
+// <span class="cm">Nota:   Tidak ada CORS di Node.js, jalankan dengan: node fetch-jakim.js</span>
+// <span class="cm">Keperluan: Node.js 18+ (fetch built-in)</span>
+// <span class="cm">═══════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> ZONES_TO_CHECK = [
+  { zone: <span class="st">'JHR02'</span>, lat: <span class="num">1.48</span>,  lng: <span class="num">103.62</span> },
+  { zone: <span class="st">'WLY01'</span>, lat: <span class="num">3.14</span>,  lng: <span class="num">101.58</span> },
+  { zone: <span class="st">'PNG01'</span>, lat: <span class="num">5.42</span>,  lng: <span class="num">100.18</span> },
+  { zone: <span class="st">'SGR01'</span>, lat: <span class="num">3.13</span>,  lng: <span class="num">101.38</span> },
+];
+
+<span class="kw">async function</span> <span class="fn">fetchZone</span>(zone) {
+  <span class="kw">const</span> url = <span class="st">`https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=</span>${zone}<span class="st">`</span>;
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(url);
+  <span class="kw">if</span>(!res.ok) <span class="kw">throw new</span> Error(<span class="st">`HTTP </span>${res.status}<span class="st"> for </span>${zone}<span class="st">`</span>);
+  <span class="kw">return</span> res.json();
+}
+
+<span class="kw">function</span> <span class="fn">extractTimes</span>(data) {
+  <span class="kw">const</span> prayerData = data?.prayerTime?.[<span class="num">0</span>];
+  <span class="kw">if</span>(!prayerData) <span class="kw">return null</span>;
+  <span class="kw">return</span> {
+    date:    prayerData.date,
+    imsak:   prayerData.imsak,
+    fajr:    prayerData.fajr,
+    syuruk:  prayerData.syuruk,
+    dhuhr:   prayerData.dhuhr,
+    asr:     prayerData.asr,
+    maghrib: prayerData.maghrib,
+    isha:    prayerData.isha,
+  };
+}
+
+(<span class="kw">async</span> () => {
+  <span class="kw">for</span> (<span class="kw">const</span> {zone, lat, lng} <span class="kw">of</span> ZONES_TO_CHECK) {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchZone</span>(zone);
+      <span class="kw">const</span> times = <span class="fn">extractTimes</span>(data);
+      console.log(<span class="st">`\n=== </span>${zone}<span class="st"> (lat=</span>${lat}<span class="st">, lng=</span>${lng}<span class="st">) ===`</span>);
+      console.log(<span class="st">`  Tarikh : </span>${times?.date}<span class="st">`</span>);
+      console.log(<span class="st">`  Imsak  : </span>${times?.imsak}<span class="st">`</span>);
+      console.log(<span class="st">`  Subuh  : </span>${times?.fajr}<span class="st">`</span>);
+      console.log(<span class="st">`  Syuruk : </span>${times?.syuruk}<span class="st">`</span>);
+      console.log(<span class="st">`  Zohor  : </span>${times?.dhuhr}<span class="st">`</span>);
+      console.log(<span class="st">`  Asar   : </span>${times?.asr}<span class="st">`</span>);
+      console.log(<span class="st">`  Maghrib: </span>${times?.maghrib}<span class="st">`</span>);
+      console.log(<span class="st">`  Isyak  : </span>${times?.isha}<span class="st">`</span>);
+    } <span class="kw">catch</span>(e) {
+      console.error(<span class="st">`✗ </span>${zone}<span class="st">: </span>${e.message}<span class="st">`</span>);
+    }
+  }
+})();
+</div>
+
+</div><!-- /tool-card -->
+</div><!-- /t5 -->
+
+</div><!-- /wrap -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SHARED CALCULATION (same formula as main app)
+// ═══════════════════════════════════════════════════════
+const R = Math.PI/180;
+const sinD = d => Math.sin(d*R);
+const cosD = d => Math.cos(d*R);
+const tanD = d => Math.tan(d*R);
+const acosD= x => Math.acos(x)/R;
+const atanD= x => Math.atan(x)/R;
+
+function jd(y,m,d){
+  if(m<=2){y--;m+=12;}
+  const A=Math.floor(y/100), B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;
+}
+
+function rawTimes(lat, lng, tz, date, elev){
+  elev = elev||10;
+  const J = jd(date.getFullYear(), date.getMonth()+1, date.getDate());
+  const T = 2*Math.PI*(J-2451545)/365.25;
+  const DELTA = 0.37877+23.264*sinD(57.297*T-79.547)+0.3812*sinD(2*57.297*T-82.682)+0.17132*sinD(3*57.297*T-59.722);
+  const U=(J-2451545)/36525, L0=280.46607+36000.7698*U;
+  const ET=(-(1789+237*U)*sinD(L0)-(7146-62*U)*cosD(L0)+(9934-14*U)*sinD(2*L0)-(29+5*U)*cosD(2*L0)+(74+10*U)*sinD(3*L0)+(320-4*U)*cosD(3*L0)-212*sinD(4*L0))/1000;
+  const TT=12+tz-(lng/15)-(ET/60);
+  const HOR=-0.8333-0.0347*Math.sqrt(elev);
+  const ASR=atanD(1/(1+tanD(Math.abs(lat-DELTA))));
+  const ha=(alt)=>{const c=(sinD(alt)-sinD(lat)*sinD(DELTA))/(cosD(lat)*cosD(DELTA));if(Math.abs(c)>1)return null;return acosD(c);};
+  const HF=ha(-20), HS=ha(HOR), HA=ha(ASR), HI=ha(-18);
+  return {
+    fajr:    HF?TT-HF/15:null,
+    syuruk:  HS?TT-HS/15:null,
+    dhuhr:   TT,
+    asr:     HA?TT+HA/15:null,
+    maghrib: HS?TT+HS/15:null,
+    isyak:   HI?TT+HI/15:null,
+    delta: DELTA, et: ET, tt: TT
+  };
+}
+
+// Default ihtiyati
+const IHT = {fajr:2, syuruk:0, dhuhr:2, asr:3, maghrib:1, isyak:2}; // Subuh 18°: ihtiyati 2min
+
+function applyIht(rawHr, ihtMin){ return rawHr!==null ? Math.floor((rawHr+ihtMin/60)*60) : null; }
+
+function calcWithIht(lat, lng, tz, date, elev, ihtOverride){
+  const raw = rawTimes(lat, lng, tz, date, elev);
+  const iht = ihtOverride || IHT;
+  const fajr_min = applyIht(raw.fajr, iht.fajr||10);
+  return {
+    imsak:   fajr_min!==null ? fajr_min-10 : null,
+    fajr:    fajr_min,
+    syuruk:  applyIht(raw.syuruk, iht.syuruk||0),
+    dhuhr:   applyIht(raw.dhuhr,  iht.dhuhr||2),
+    asr:     applyIht(raw.asr,    iht.asr||3),
+    maghrib: applyIht(raw.maghrib,iht.maghrib||1),
+    isyak:   applyIht(raw.isyak,  iht.isha||iht.isyak||2),
+    _raw: raw
+  };
+}
+
+function parseHHMM(str){
+  if(!str||!str.trim()) return null;
+  const p = str.trim().split(':');
+  if(p.length!==2) return null;
+  const h=parseInt(p[0]), m=parseInt(p[1]);
+  if(isNaN(h)||isNaN(m)) return null;
+  return h*60+m;
+}
+
+function fmtMin(m){
+  if(m===null||isNaN(m)) return '--:--';
+  m=((m%1440)+1440)%1440;
+  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+}
+
+// ── Tab switching ──────────────────────────────────────
+function showTab(id, el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+function showSrcTab(id, el){
+  ['src1','src2','src3','src4'].forEach(s=>{
+    const el2=document.getElementById(s); if(el2)el2.style.display='none';
+  });
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).style.display='block';
+  el.classList.add('active');
+}
+
+// Set today's date as default
+document.addEventListener('DOMContentLoaded',()=>{
+  const today = new Date().toISOString().slice(0,10);
+  ['cmp-date','probe-date','iht-date'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=today; });
+});
+
+// ── TAB 1: Comparison ─────────────────────────────────
+function runComparison(){
+  const dateStr = document.getElementById('cmp-date').value;
+  const date    = dateStr ? new Date(dateStr) : new Date();
+  const lat     = parseFloat(document.getElementById('cmp-lat').value);
+  const lng     = parseFloat(document.getElementById('cmp-lng').value);
+  const tz      = parseFloat(document.getElementById('cmp-tz').value);
+  const elev    = parseFloat(document.getElementById('cmp-elev').value)||10;
+  const ihtFajr = parseFloat(document.getElementById('cmp-iht-fajr').value)||10;
+  const ihtIsha = parseFloat(document.getElementById('cmp-iht-isha').value)||2;
+
+  const jakim = {
+    imsak:   parseHHMM(document.getElementById('jakim-imsak').value),
+    fajr:    parseHHMM(document.getElementById('jakim-fajr').value),
+    dhuhr:   parseHHMM(document.getElementById('jakim-dhuhr').value),
+    asr:     parseHHMM(document.getElementById('jakim-asr').value),
+    maghrib: parseHHMM(document.getElementById('jakim-maghrib').value),
+    isyak:   parseHHMM(document.getElementById('jakim-isha').value),
+  };
+
+  const ihtO = {fajr:ihtFajr, syuruk:0, dhuhr:2, asr:3, maghrib:1, isyak:ihtIsha};
+  const calc  = calcWithIht(lat, lng, tz, date, elev, ihtO);
+  const raw   = calc._raw;
+
+  const out = document.getElementById('cmp-out');
+  out.style.display='block';
+
+  const rows = [
+    {key:'imsak',   label:'Imsak  '},
+    {key:'fajr',    label:'Subuh  '},
+    {key:'syuruk',  label:'Syuruk '},
+    {key:'dhuhr',   label:'Zohor  '},
+    {key:'asr',     label:'Asar   '},
+    {key:'maghrib', label:'Maghrib'},
+    {key:'isyak',   label:'Isyak  '},
+  ];
+
+  let html = `<span class="hdr">── Perbandingan: ${date.toLocaleDateString('ms-MY')} · ${lat}°N ${lng}°E ──</span>\n`;
+  html += `<span class="dim">   δ=${raw.delta.toFixed(4)}°  ET=${raw.et.toFixed(4)}min  TT=${raw.tt.toFixed(4)}h</span>\n\n`;
+  html += `<span class="dim">Waktu       Kiraan  JAKIM   Beza  Status</span>\n`;
+  html += `<span class="dim">──────────  ──────  ──────  ────  ──────────────</span>\n`;
+
+  let totalDiff=0, count=0;
+  rows.forEach(r=>{
+    const calc_m = calc[r.key];
+    const jakim_m = jakim[r.key];
+    const calcStr = fmtMin(calc_m);
+    if(jakim_m===null){
+      html += `${r.label}  <span class="val">${calcStr}</span>  <span class="dim">—       —     (tiada data JAKIM)</span>\n`;
+      return;
+    }
+    const diff = calc_m - jakim_m;
+    totalDiff += Math.abs(diff); count++;
+    const diffStr = diff===0?'+0':(diff>0?`+${diff}`:`${diff}`);
+    let cls='ok', status='✓ Padanan tepat';
+    if(Math.abs(diff)===1){ cls='warn'; status='≈ Hampir (±1m)'; }
+    else if(Math.abs(diff)===2){ cls='warn'; status='⚠ Selisih 2 minit'; }
+    else if(Math.abs(diff)>2){ cls='err'; status=`✗ Berbeza ${Math.abs(diff)} minit`; }
+    html += `${r.label}  <span class="val">${calcStr}</span>  <span class="dim">${fmtMin(jakim_m)}</span>  <span class="${cls}">${diffStr.padStart(3,'')}</span>   <span class="${cls}">${status}</span>\n`;
+  });
+
+  if(count>0){
+    const avg=(totalDiff/count).toFixed(1);
+    html += `\n<span class="dim">Purata perbezaan mutlak: </span><span class="${parseFloat(avg)<=1?'ok':parseFloat(avg)<=2?'warn':'err'}">${avg} minit</span>`;
+  }
+  out.innerHTML = html;
+}
+
+// ── TAB 2: Probe ──────────────────────────────────────
+function runProbe(){
+  const axis   = document.getElementById('probe-axis').value;
+  const dateStr= document.getElementById('probe-date').value;
+  const date   = dateStr ? new Date(dateStr) : new Date();
+  const lat    = parseFloat(document.getElementById('probe-lat').value);
+  const lng    = parseFloat(document.getElementById('probe-lng').value);
+  const tz     = parseFloat(document.getElementById('probe-tz').value);
+  const elev   = parseFloat(document.getElementById('probe-elev').value)||10;
+  const from   = parseFloat(document.getElementById('probe-from').value);
+  const to     = parseFloat(document.getElementById('probe-to').value);
+  const step   = parseFloat(document.getElementById('probe-step').value)||0.05;
+  const target = parseHHMM(document.getElementById('probe-target').value);
+
+  const out = document.getElementById('probe-out');
+  out.style.display='block';
+
+  let html = `<span class="hdr">── Probe ${axis==='lng'?'Longitud':'Latitud'}: ${from} → ${to} (langkah ${step}) ──</span>\n`;
+  html += `<span class="dim">${axis==='lng'?'lat':'lng'} tetap: ${axis==='lng'?lat:lng}  Sasaran Subuh: ${target!==null?fmtMin(target):'(tiada)'}</span>\n\n`;
+
+  let hits = [];
+  for(let v=from; v<=to+0.001; v+=step){
+    const clat = axis==='lng' ? lat : v;
+    const clng = axis==='lng' ? v   : lng;
+    const calc = calcWithIht(clat, clng, tz, date, elev);
+    const fajrStr = fmtMin(calc.fajr);
+    const isTarget = target!==null && calc.fajr===target;
+    if(isTarget) hits.push(v.toFixed(3));
+    const tag = isTarget ? ` <span class="ok">← SASARAN ✓</span>` : '';
+    html += `${axis==='lng'?'lng':'lat'}=${v.toFixed(3).padStart(7)}  Subuh=<span class="val">${fajrStr}</span>  Zohor=${fmtMin(calc.dhuhr)}  Asar=${fmtMin(calc.asr)}  Magh=${fmtMin(calc.maghrib)}${tag}\n`;
+  }
+
+  if(hits.length>0) html += `\n<span class="ok">Koordinat padanan sasaran: ${hits.join(', ')}</span>`;
+  else if(target!==null) html += `\n<span class="warn">Tiada padanan tepat dalam julat ini.</span>`;
+
+  out.innerHTML = html;
+}
+
+// ── TAB 3: Ihtiyati Probe ─────────────────────────────
+function runIhtiyatiProbe(){
+  const dateStr = document.getElementById('iht-date').value;
+  const date    = dateStr ? new Date(dateStr) : new Date();
+  const lat     = parseFloat(document.getElementById('iht-lat').value);
+  const lng     = parseFloat(document.getElementById('iht-lng').value);
+  const tz      = parseFloat(document.getElementById('iht-tz').value);
+  const elev    = parseFloat(document.getElementById('iht-elev').value)||10;
+  const ihtMin  = parseInt(document.getElementById('iht-min').value)||0;
+  const ihtMax  = parseInt(document.getElementById('iht-max').value)||15;
+
+  const jakim = {
+    imsak:   parseHHMM(document.getElementById('iht-imsak').value),
+    fajr:    parseHHMM(document.getElementById('iht-fajr').value),
+    dhuhr:   parseHHMM(document.getElementById('iht-dhuhr').value),
+    asr:     parseHHMM(document.getElementById('iht-asr').value),
+    maghrib: parseHHMM(document.getElementById('iht-maghrib').value),
+    isyak:   parseHHMM(document.getElementById('iht-isha').value),
+  };
+
+  const raw = rawTimes(lat, lng, tz, date, elev);
+  const out = document.getElementById('iht-out');
+  out.style.display='block';
+
+  let html = `<span class="hdr">── Probe Ihtiyati: ${lat}°N ${lng}°E · ${date.toLocaleDateString('ms-MY')} ──</span>\n`;
+  html += `<span class="dim">Nilai astronomik mentah:</span>\n`;
+  ['fajr','dhuhr','asr','maghrib','isyak'].forEach(k=>{
+    if(raw[k]) html += `  ${k.padEnd(8)}: ${(raw[k]*60).toFixed(3)} min (${fmtMin(Math.floor(raw[k]*60))} tanpa ihtiyati)\n`;
+  });
+  html += `\n<span class="dim">Ihtiyati optimum bagi setiap waktu:</span>\n`;
+
+  const keys = ['fajr','dhuhr','asr','maghrib','isyak'];
+  const best = {};
+  keys.forEach(k=>{
+    if(!jakim[k]||!raw[k]) return;
+    for(let iht=ihtMin; iht<=ihtMax; iht++){
+      const result = Math.floor((raw[k]+iht/60)*60);
+      if(result===jakim[k]){
+        best[k]=iht;
+        html += `  <span class="ok">✓</span> ${k.padEnd(8)}: ihtiyati=<span class="val">${iht}</span>min  raw=${(raw[k]*60).toFixed(2)}min  hasil=${fmtMin(result)}  jakim=${fmtMin(jakim[k])}\n`;
+        break;
+      }
+    }
+    if(best[k]===undefined){
+      // find nearest
+      let bestDiff=999, bestIht=0;
+      for(let iht=ihtMin; iht<=ihtMax; iht++){
+        const result=Math.floor((raw[k]+iht/60)*60);
+        if(Math.abs(result-jakim[k])<bestDiff){bestDiff=Math.abs(result-jakim[k]);bestIht=iht;}
+      }
+      html += `  <span class="warn">~</span> ${k.padEnd(8)}: ihtiyati terbaik=<span class="warn">${bestIht}</span>min  beza=${bestDiff}min dari jakim=${fmtMin(jakim[k])}\n`;
+    }
+  });
+
+  out.innerHTML = html;
+}
+
+// ── TAB 4: Fetch JAKIM ────────────────────────────────
+function showCurlCmd(){
+  const zone   = document.getElementById('fetch-zone').value;
+  const period = document.getElementById('fetch-period').value;
+  const url    = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=${period}&zone=${zone}`;
+  document.getElementById('curl-box').style.display='block';
+  document.getElementById('curl-text').textContent = `curl -s "${url}" | python3 -m json.tool`;
+  document.getElementById('node-text').textContent =
+`// Simpan sebagai fetch-jakim.js, jalankan: node fetch-jakim.js
+const url = '${url}';
+fetch(url)
+  .then(r => r.json())
+  .then(data => {
+    const t = data.prayerTime?.[0];
+    if(!t){ console.log('Tiada data'); return; }
+    console.log('Zon:', data.zone?.['zone_name'] || '${zone}');
+    console.log('Tarikh:', t.date);
+    console.log('Imsak  :', t.imsak);
+    console.log('Subuh  :', t.fajr);
+    console.log('Syuruk :', t.syuruk);
+    console.log('Zohor  :', t.dhuhr);
+    console.log('Asar   :', t.asr);
+    console.log('Maghrib:', t.maghrib);
+    console.log('Isyak  :', t.isha);
+  })
+  .catch(e => console.error('Ralat:', e.message));`;
+}
+
+async function fetchJAKIM(){
+  const zone   = document.getElementById('fetch-zone').value;
+  const period = document.getElementById('fetch-period').value;
+  const url    = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=${period}&zone=${zone}`;
+
+  const logEl = document.getElementById('fetch-log');
+  const resEl = document.getElementById('fetch-result');
+  logEl.style.display='block'; resEl.style.display='none';
+
+  function log(msg, cls='log-info'){ logEl.innerHTML += `<span class="${cls}">${msg}</span>\n`; }
+  logEl.innerHTML='';
+  log(`→ Fetch: ${url}`);
+  log('  (Mungkin disekat oleh CORS — cuba dari Node.js jika gagal)','log-warn');
+
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    log(`✓ Status: ${res.status} OK`, 'log-ok');
+    const prayers = data.prayerTime;
+    if(!prayers||!prayers.length){ log('Tiada data prayerTime dalam respons','log-warn'); return; }
+    log(`  ${prayers.length} hari diterima\n`, 'log-ok');
+
+    // auto-fill comparison tab
+    const t = prayers[0];
+    document.getElementById('jakim-imsak').value  = t.imsak   || '';
+    document.getElementById('jakim-fajr').value   = t.fajr    || '';
+    document.getElementById('jakim-dhuhr').value  = t.dhuhr   || '';
+    document.getElementById('jakim-asr').value    = t.asr     || '';
+    document.getElementById('jakim-maghrib').value= t.maghrib || '';
+    document.getElementById('jakim-isha').value   = t.isha    || '';
+    log('✓ Data hari pertama diisi ke Tab 1 (Perbandingan) secara automatik', 'log-ok');
+
+    resEl.style.display='block';
+    let html='<table class="cmp-table"><tr><th>Waktu</th>';
+    prayers.slice(0,7).forEach(p=>{ html+=`<th>${p.date?.slice(5)||'—'}</th>`; });
+    html+='</tr>';
+    ['imsak','fajr','syuruk','dhuhr','asr','maghrib','isha'].forEach(k=>{
+      const label={imsak:'Imsak',fajr:'Subuh',syuruk:'Syuruk',dhuhr:'Zohor',asr:'Asar',maghrib:'Maghrib',isha:'Isyak'}[k];
+      html+=`<tr><td class="cmp-label">${label}</td>`;
+      prayers.slice(0,7).forEach(p=>{ html+=`<td>${p[k]||'—'}</td>`; });
+      html+='</tr>';
+    });
+    html+='</table>';
+    resEl.innerHTML=html;
+
+  } catch(e) {
+    log(`✗ Gagal: ${e.message}`, 'log-err');
+    log('  → Cuba gunakan Node.js (lihat butang "Tunjuk cURL / Node.js")', 'log-warn');
+    log('  → Atau buka URL terus dalam pelayar dan salin data ke Tab 1', 'log-warn');
+  }
+}
+</script>
+</body>
+</html>

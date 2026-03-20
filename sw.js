@@ -1,4 +1,4 @@
-const CACHE_NAME = 'waktu-solat-v2';
+const CACHE_NAME = 'waktu-solat-v3';
 const APP_SHELL = [
   './',
   'index.html',
@@ -17,7 +17,10 @@ const APP_SHELL = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(async cache => {
+      await Promise.allSettled(APP_SHELL.map(asset => cache.add(asset)));
+      await self.skipWaiting();
+    })
   );
 });
 

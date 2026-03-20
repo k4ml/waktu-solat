@@ -1,4 +1,4 @@
-const CACHE_NAME = 'waktu-solat-v3';
+const CACHE_NAME = 'waktu-solat-v4';
 const APP_SHELL = [
   './',
   'index.html',

@@ -2,7 +2,7 @@
 
 A small installable Malaysian prayer time calculator. No API calls, no dependencies, and after the first online visit it can run fully offline from a phone home screen.
 
-**[→ Live Demo](https://your-username.github.io/waktu-solat)**
+**[→ Live Demo](https://solat.koditi.my/)**
 
 ---
 

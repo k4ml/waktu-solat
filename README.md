@@ -23,7 +23,7 @@ A small installable Malaysian prayer time calculator. No API calls, no dependenc
 | File | Purpose |
 |---|---|
 | `index.html` | Main application UI and calculation logic |
-| `dev-tools.html` | Developer cross-check tools |
+| `dev-tools.html` | Developer cross-check tools (typically deployed at `/dev-tools`) |
 | `manifest.webmanifest` | PWA manifest for installation |
 | `sw.js` | Service worker for offline caching |
 | `icons/` | Local app icons used by the manifest and browsers |

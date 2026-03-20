@@ -1,0 +1,26 @@
+{
+  "name": "Waktu Solat Malaysia",
+  "short_name": "Waktu Solat",
+  "description": "Kalkulator waktu solat Malaysia yang boleh dipasang pada telefon dan digunakan tanpa internet selepas lawatan pertama.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#111820",
+  "lang": "ms",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # 🕌 Waktu Solat Malaysia
 
-A single-file, offline-capable Malaysian prayer time calculator. No installation, no external API calls, no dependencies — just open the HTML file in any browser.
+A small installable Malaysian prayer time calculator. No API calls, no dependencies, and after the first online visit it can run fully offline from a phone home screen.
 
 **[→ Live Demo](https://your-username.github.io/waktu-solat)**
 
@@ -12,8 +12,9 @@ A single-file, offline-capable Malaysian prayer time calculator. No installation
 - **Dual west/east columns** — western boundary (JAKIM official reference) and eastern boundary of each zone, showing the time spread within a zone
 - **Live countdown** to next prayer, ticking every second
 - **Hijri date** computed locally
-- **Mobile-friendly** — works on any phone browser, no installation needed
-- **Fully offline** after first load (only Google Fonts requires network on first visit)
+- **Installable PWA** — add to home screen on Android or iPhone/iPad
+- **Fully offline after first load** — app shell, icons, and manifest are cached locally
+- **Selection persistence** — remembers the user's last chosen state/zone on the device
 
 ---
 
@@ -21,8 +22,11 @@ A single-file, offline-capable Malaysian prayer time calculator. No installation
 
 | File | Purpose |
 |---|---|
-| `waktu-solat.html` | Main application — the only file you need |
-| `waktu-solat-devtools.html` | Developer cross-check tools (keep in same folder) |
+| `index.html` | Main application UI and calculation logic |
+| `dev-tools.html` | Developer cross-check tools |
+| `manifest.webmanifest` | PWA manifest for installation |
+| `sw.js` | Service worker for offline caching |
+| `icons/` | Local app icons used by the manifest and browsers |
 
 ---
 
@@ -103,28 +107,26 @@ Shafi'i Asar (used in Malaysia) occurs 30–60 minutes earlier than Hanafi Asar 
 
 ## Running Locally
 
-No build step. Open directly:
+No build step. For install/offline support, serve over `http://localhost` or HTTPS so the service worker can register:
 
 ```bash
 git clone https://github.com/your-username/waktu-solat.git
 cd waktu-solat
 
-# macOS
-open waktu-solat.html
-
-# Windows
-start waktu-solat.html
-
-# Linux
-xdg-open waktu-solat.html
-```
-
-To use the API fetch tab in dev tools without CORS restrictions, serve with any static server:
-
-```bash
 npx serve .
 # then open http://localhost:3000
 ```
+
+Direct `file://` opening still shows the calculator, but browser install prompts and offline caching will not work there because service workers are disabled on `file://`.
+
+## Mobile Install
+
+1. Open the deployed app once while online.
+2. Use the in-app install button if the browser offers it.
+3. If no button appears:
+   - **iPhone/iPad (Safari):** Share → Add to Home Screen
+   - **Android (Chrome/Edge):** browser menu → Install app / Add to Home screen
+4. After installation, launch from the home screen icon. The cached app should continue working without internet.
 
 ---
 

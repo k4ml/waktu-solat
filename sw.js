@@ -1,11 +1,16 @@
-const CACHE_NAME = 'waktu-solat-v1';
+const CACHE_NAME = 'waktu-solat-v2';
 const APP_SHELL = [
   './',
   'index.html',
+  './index.html',
   'dev-tools.html',
+  './dev-tools.html',
   'manifest.webmanifest',
+  './manifest.webmanifest',
   'icons/icon.svg',
-  'icons/icon-maskable.svg'
+  './icons/icon.svg',
+  'icons/icon-maskable.svg',
+  './icons/icon-maskable.svg'
 ];
 
 self.addEventListener('install', event => {

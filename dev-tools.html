@@ -565,10 +565,18 @@ function showSrcTab(id, el){
   el.classList.add('active');
 }
 
+function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
 // Set today's date as default
 document.addEventListener('DOMContentLoaded',()=>{
   const today = new Date().toISOString().slice(0,10);
   ['cmp-date','probe-date','iht-date'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=today; });
+  registerServiceWorker();
 });
 
 // ── TAB 1: Comparison ─────────────────────────────────

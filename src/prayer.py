@@ -134,7 +134,7 @@ def diff_str(w_min: int | None, e_min: int | None) -> str:
     if d == 0:
         return ''
     # east = more longitude = earlier time = smaller minute = negative diff
-    return f"−{d}m" if d < 0 else f"+{abs(d)}m"
+    return f"−{abs(d)}m" if d < 0 else f"+{d}m"
 
 
 def to_hijri(date: datetime) -> str:

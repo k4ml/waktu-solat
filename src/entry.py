@@ -114,6 +114,68 @@ class Default(WorkerEntrypoint):
             },
         }
 
+    def get_next_prayer(self, zone_code: str, now: datetime):
+        """Calculate the next prayer time.
+        
+        Returns (prayer_name, prayer_time_str, minutes_until).
+        """
+        found = get_zone_by_code(zone_code)
+        if found is None:
+            return None, None, None
+
+        _, _, data = found
+        elev = data.get("elev", 10)
+        times = calc_times(now, data["west"]["lat"], data["west"]["lng"], data["tz"], elev)
+
+        # Current minutes since midnight
+        current_min = now.hour * 60 + now.minute
+
+        # Find next prayer (skip imsak and syuruk for next prayer display)
+        next_prayer_key = None
+        next_prayer_min = None
+        for p in PRAYERS:
+            key = p["key"]
+            if key in ("imsak", "syuruk"):
+                continue
+            t = times[key]
+            if t is not None and t > current_min:
+                next_prayer_key = key
+                next_prayer_min = t
+                break
+
+        # If no more prayers today, show tomorrow's Fajr
+        if next_prayer_key is None:
+            next_prayer_key = "fajr"
+            next_prayer_min = times["fajr"]
+            if next_prayer_min is not None:
+                # Add 24 hours (1440 min) for tomorrow
+                next_prayer_min += 1440
+
+        if next_prayer_key is None:
+            return None, None, None
+
+        # Get prayer name in Malay
+        prayer_names = {
+            "fajr": "Subuh",
+            "dhuhr": "Zohor",
+            "asr": "Asar",
+            "maghrib": "Maghrib",
+            "isyak": "Isyak",
+        }
+        name = prayer_names.get(next_prayer_key, next_prayer_key)
+
+        # Calculate minutes until
+        if next_prayer_min >= 1440:
+            mins_until = next_prayer_min - 1440 - current_min + 1440
+        else:
+            mins_until = next_prayer_min - current_min
+
+        # Format time
+        display_min = next_prayer_min % 1440
+        time_str = f"{display_min // 60:02d}:{display_min % 60:02d}"
+
+        return name, time_str, mins_until
+
     def render_zone_page(self, zone_code: str):
         """Render full HTML page matching original design."""
         result = self.get_zone_times(zone_code)
@@ -124,6 +186,13 @@ class Default(WorkerEntrypoint):
         zone_data = get_zone_by_code(zone_code)
         state, zone_name, _ = zone_data
         now = datetime.now(MYT)
+
+        # Get next prayer
+        next_name, next_time, mins_until = self.get_next_prayer(zone_code, now)
+        if next_name is None:
+            next_name = "—"
+            next_time = "—"
+            mins_until = 0
 
         # Build state options
         state_options = ""
@@ -349,11 +418,11 @@ footer span{{color:var(--text-dim);}}
   <div class="countdown-card">
     <div>
       <span class="countdown-label">Waktu Solat Seterusnya</span>
-      <div class="countdown-name" id="nextPrayerName">—</div>
+      <div class="countdown-name" id="nextPrayerName">{next_name}</div>
     </div>
     <div>
-      <div class="countdown-timer" id="countdownTimer">—</div>
-      <div class="countdown-sub" id="nextPrayerTime">—</div>
+      <div class="countdown-timer" id="countdownTimer">{f"{mins_until//60:02d}:{mins_until%60:02d}" if mins_until else "—"}</div>
+      <div class="countdown-sub" id="nextPrayerTime">{next_time}</div>
     </div>
   </div>
 

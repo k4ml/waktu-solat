@@ -87,7 +87,7 @@ def calc_times(date: datetime, lat: float, lng: float, tz: int, elev: float = 10
     HA_I = hour_angle(lat, DELTA, -18)  # 18° for Isha
     
     # Raw times in decimal hours
-    raw_fajr = HA_F - HA_F / 15 if HA_F is not None else None
+    raw_fajr = TT - HA_F / 15 if HA_F is not None else None
     raw_syuruk = TT - HA_S / 15 if HA_S is not None else None
     raw_asr = TT + HA_A / 15 if HA_A is not None else None
     raw_maghrib = TT + HA_S / 15 if HA_S is not None else None

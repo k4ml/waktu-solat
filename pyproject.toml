@@ -1,0 +1,13 @@
+[project]
+name = "waktu-solat"
+version = "1.0.0"
+description = "Waktu Solat Malaysia - Cloudflare Python Worker with SSR"
+requires-python = ">=3.12"
+
+[tool.wrangler]
+compatibility_date = "2025-11-02"
+
+[dependency-groups]
+dev = [
+    "workers-py>=1.17.1",
+]

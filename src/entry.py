@@ -49,8 +49,21 @@ class Default(WorkerEntrypoint):
     async def fetch(self, request):
         """Handle incoming requests."""
         url = urlparse(request.url)
-        path = url.path.rstrip("/") or "/"
         base_url = f"{url.scheme}://{url.netloc}"
+
+        # Force trailing slash on page URLs (SEO canonicalization).
+        original_path = url.path or "/"
+        if (
+            original_path not in ("/", "")
+            and not original_path.endswith("/")
+            and "." not in original_path.rsplit("/", 1)[-1]
+        ):
+            new_url = f"{base_url}{original_path}/"
+            if url.query:
+                new_url += f"?{url.query}"
+            return Response("", status=301, headers={"Location": new_url})
+
+        path = original_path.rstrip("/") or "/"
 
         # API endpoint for JSON data
         if path.startswith("/api/zone/"):
@@ -275,7 +288,7 @@ class Default(WorkerEntrypoint):
             f"Asar {west_times['asr']}, Maghrib {west_times['maghrib']}, "
             f"Isyak {west_times['isyak']}."
         )
-        canonical = f"{base_url}/zone/{zone_code}"
+        canonical = f"{base_url}/zone/{zone_code}/"
 
         json_ld = {
             "@context": "https://schema.org",

@@ -35,7 +35,30 @@ PRAYER_ICONS = {
     "isyak": "🌃",
 }
 
-# The five obligatory prayers: highlighted when current, and used for the next
+def _slugify(text: str) -> str:
+    text = text.lower().strip()
+    for ch in " ,./&":
+        text = text.replace(ch, "-")
+    # collapse
+    while "--" in text:
+        text = text.replace("--", "-")
+    return text.strip("-")
+
+
+# Map SEO-friendly slugs to JAKIM zone codes (e.g. /zon/johor-bahru/).
+SLUG_TO_ZONE = {}
+_zone_slugs_seen = set()
+for _state, _zones in ZONES.items():
+    for _name, _data in _zones.items():
+        code = _data["zone"]
+        # Primary city = first comma-separated place before " - "
+        location = _name.split(" - ", 1)[-1]
+        primary = location.split(",")[0].strip()
+        slug = _slugify(primary)
+        if slug in _zone_slugs_seen:
+            slug = _slugify(primary + "-" + _state)
+        _zone_slugs_seen.add(slug)
+        SLUG_TO_ZONE[slug] = code
 # prayer countdown. Imsak and Syuruk are excluded, as in the original.
 ACTIVE_KEYS = ["fajr", "dhuhr", "asr", "maghrib", "isyak"]
 
@@ -80,6 +103,16 @@ class Default(WorkerEntrypoint):
         # Zone page: /zone/JHR02
         if path.startswith("/zone/"):
             return self.render_zone_page(path.split("/")[-1].upper(), base_url)
+
+        # Zone page alias: /zon/kuala-lumpur/
+        if path.startswith("/zon/"):
+            slug = path.strip("/").split("/")[-1]
+            code = SLUG_TO_ZONE.get(slug)
+            if code is None:
+                return Response("Not Found", status=404)
+            return self.render_zone_page(
+                code, base_url, canonical=f"{base_url}/zon/{slug}/"
+            )
 
         # Root - default zone, overridable with ?zone=JHR02
         if path == "/":
@@ -180,7 +213,7 @@ class Default(WorkerEntrypoint):
             return None, None
         return "fajr", tmr["fajr"] + 1440
 
-    def render_zone_page(self, zone_code: str, base_url: str = ""):
+    def render_zone_page(self, zone_code: str, base_url: str = "", canonical: str = None):
         """Render the full SSR page for a zone, matching the original PWA."""
         found = get_zone_by_code(zone_code)
         if found is None:
@@ -288,7 +321,7 @@ class Default(WorkerEntrypoint):
             f"Asar {west_times['asr']}, Maghrib {west_times['maghrib']}, "
             f"Isyak {west_times['isyak']}."
         )
-        canonical = f"{base_url}/zone/{zone_code}/"
+        canonical = canonical if canonical is not None else f"{base_url}/zone/{zone_code}/"
 
         json_ld = {
             "@context": "https://schema.org",

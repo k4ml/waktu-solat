@@ -634,7 +634,9 @@ function diffStr(wMin, eMin){
 //  HIJRI DATE
 // ═══════════════════════════════════════════════════════
 function toHijri(date){
-  const jd=Math.floor(julianDate(date.getFullYear(),date.getMonth()+1,date.getDate()))+0.5;
+  // Integer Julian Day Number: julianDate() returns the midnight JD (X.5), so
+  // the midday offset must be a whole day or the result keeps a half day.
+  const jd=Math.floor(julianDate(date.getFullYear(),date.getMonth()+1,date.getDate()))+1;
   const l=jd-1948440+10632, n=Math.floor((l-1)/10631);
   const l2=l-10631*n+354;
   const j=(Math.floor((10985-l2)/5316))*(Math.floor((50*l2)/17719))+(Math.floor(l2/5670))*(Math.floor((43*l2)/15238));

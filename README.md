@@ -23,7 +23,7 @@ while maintaining offline PWA support via service worker.
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │  Service Worker (Offline Cache)                     │   │
 │  │  - Caches app shell on install                      │   │
-│  │  - Stale-while-revalidate for pages                 │   │
+│  │  - Cache-first with offline navigation fallback      │   │
 │  │  - Falls back to cache when offline                 │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -33,28 +33,31 @@ while maintaining offline PWA support via service worker.
 
 | URL | Description |
 |-----|-------------|
-| `/` | Default zone (WLY01 - KL) |
+| `/` | Default zone (JHR02 - Johor) |
 | `/zone/JHR02` | Specific zone page (SSR) |
 | `/?zone=JHR02` | Query param alternative |
 | `/api/zone/JHR02` | JSON API for zone |
 | `/sw.js` | Service worker |
 | `/manifest.webmanifest` | PWA manifest |
+| `/icons/*` | App icons (static assets) |
+| `/dev-tools` | Development reference page (static assets) |
 
 ## SEO Features
 
 - **Server-rendered prayer times** in HTML (crawlable by search engines)
 - **Dynamic title**: "Waktu Solat Kuala Lumpur, Putrajaya - 2026-09-06"
+- **Canonical + og:url** per zone (dedupes `/` and `/?zone=` against `/zone/`)
 - **Meta description** with actual prayer times
 - **Open Graph tags** for social sharing
 - **Twitter Card** meta tags
 - **JSON-LD structured data** for rich snippets
-- **Per-zone URLs** for indexing (41 zones = 41 indexable pages)
+- **Per-zone URLs** for indexing (59 zones = 59 indexable pages)
 
 ## Offline Support
 
-- Service worker caches app shell on first visit
-- Stale-while-revalidate strategy for zone pages
-- Full PWA installability maintained
+- Service worker caches the app shell on first visit
+- Cache-first strategy for pages, with an offline navigation fallback
+- Full PWA installability: icons and maskable icon served from `public/`
 - Offline badge shown when network unavailable
 
 ## Local Development
@@ -85,14 +88,16 @@ uv run pywrangler deploy
 ```
 .
 ├── src/
-│   ├── entry.py          # Worker entry point (SSR handler)
+│   ├── entry.py          # Worker entry point (SSR handler, sw.js + manifest)
+│   ├── template.py       # Page template (mirrors index.html markup/CSS/JS)
 │   ├── prayer.py         # Calculation engine
 │   └── zones.py          # Zone data
+├── public/               # Static assets served by the worker
+│   ├── icons/            # App icons + maskable icon
+│   └── dev-tools.html    # Development reference page
 ├── wrangler.jsonc        # Worker configuration
 ├── pyproject.toml        # Python project config
-├── sw.js                 # Service worker (static)
-├── manifest.webmanifest  # PWA manifest (static)
-└── icons/                # App icons
+└── index.html            # Original client-rendered PWA
 ```
 
 ## Calculation Method

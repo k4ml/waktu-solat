@@ -127,19 +127,26 @@ def fmt_min(m: int | None) -> str:
 
 
 def diff_str(w_min: int | None, e_min: int | None) -> str:
-    """Calculate diff string between west and east minute values."""
+    """Diff string between west and east minute values.
+
+    Rendered under the Barat column, so a positive value means the Barat
+    (official) time is later than the Timur time. Matches index.html diffStr().
+    """
     if w_min is None or e_min is None:
         return ''
     d = e_min - w_min
     if d == 0:
         return ''
-    # east = more longitude = earlier time = smaller minute = negative diff
-    return f"−{abs(d)}m" if d < 0 else f"+{d}m"
+    return f"−{d}m" if d > 0 else f"+{abs(d)}m"
 
 
 def to_hijri(date: datetime) -> str:
     """Convert Gregorian date to Hijri date using tabular Islamic calendar."""
-    jd = math.floor(julian_date(date.year, date.month, date.day)) + 0.5
+    # The tabular algorithm expects an integer Julian Day Number. julian_date()
+    # returns the midnight JD (X.5), so add a whole day - using a +0.5 midday
+    # offset leaves a half day in the result and can push a month over its
+    # boundary (e.g. "29 undefined 1448H").
+    jd = math.floor(julian_date(date.year, date.month, date.day)) + 1
     l = jd - 1948440 + 10632
     n = math.floor((l - 1) / 10631)
     l2 = l - 10631 * n + 354
@@ -148,7 +155,7 @@ def to_hijri(date: datetime) -> str:
     l3 = (l2 - math.floor((30 - j) / 15) * math.floor((17719 * j) / 50) -
           math.floor(j / 16) * math.floor((15238 * j) / 43) + 29)
     mo = math.floor((24 * l3) / 709)
-    dy = round(l3 - math.floor((709 * mo) / 24))  # Round to handle floating point
+    dy = l3 - math.floor((709 * mo) / 24)
     yr = 30 * n + j - 30
     
     MH = ['Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',

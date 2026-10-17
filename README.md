@@ -48,6 +48,7 @@ while maintaining offline PWA support via service worker.
 - **Server-rendered prayer times** in HTML (crawlable by search engines)
 - **Dynamic title**: "Waktu Solat Kuala Lumpur, Putrajaya - 2026-09-06"
 - **Canonical + og:url** per zone (dedupes `/`, `/?zone=`, and `/zon/<CODE>/` against `/zon/<slug>/`)
+- Canonical origin is set by the `SITE_ORIGIN` var, not the request host, so Preview and per-deployment hostnames all canonicalize to one URL. Redirects still use the request host.
 - **Meta description** with actual prayer times
 - **Open Graph tags** for social sharing
 - **Twitter Card** meta tags
@@ -83,6 +84,25 @@ uvx --from workers-py pywrangler dev
 ```bash
 uv run pywrangler deploy
 ```
+
+### Preview deployments
+
+Requires Wrangler 4.135.0+ (the version `pywrangler` resolves). Preview settings
+live in the `previews` block of `wrangler.jsonc`; assets and `compatibility_*`
+stay at the top level.
+
+```bash
+# Preview name defaults to the current git branch
+uv run pywrangler preview
+
+# Or name it explicitly
+uv run pywrangler preview --name my-branch
+```
+
+Each Preview needs its own `SITE_ORIGIN` under `previews.vars` so its canonical
+tags point at the Preview URL (`https://<preview-name>-waktu-solat.<subdomain>.workers.dev`)
+rather than the per-deployment hostname. Branch config is the source of truth,
+so set it on the branch you are previewing.
 
 ## File Structure
 

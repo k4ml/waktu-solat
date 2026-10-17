@@ -9,8 +9,15 @@
 	"assets": {
 		"directory": "./public"
 	},
+	"vars": {
+		"SITE_ORIGIN": "https://waktu-solat.kamal-mustafa.workers.dev"
+	},
 	"observability": {
 		"enabled": true
 	},
-	"previews": {}
+	"previews": {
+		"vars": {
+			"SITE_ORIGIN": "https://cloudflare-python-waktu-solat.kamal-mustafa.workers.dev"
+		}
+	}
 }

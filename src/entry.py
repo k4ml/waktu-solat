@@ -82,7 +82,12 @@ class Default(WorkerEntrypoint):
     async def fetch(self, request):
         """Handle incoming requests."""
         url = urlparse(request.url)
+        # Request host. Redirects use this so they stay on the host being browsed.
         base_url = f"{url.scheme}://{url.netloc}"
+        # Canonical/og:url origin comes from configuration (top-level `vars` for
+        # production, `previews.vars` for Previews) so Preview and per-deployment
+        # hostnames all point at one stable URL. Falls back to the request host.
+        site_origin = (getattr(self.env, "SITE_ORIGIN", None) or base_url).rstrip("/")
 
         # Force trailing slash on page URLs (SEO canonicalization).
         original_path = url.path or "/"
@@ -131,13 +136,15 @@ class Default(WorkerEntrypoint):
                 return Response("Not Found", status=404)
             # Canonical: the slug URL when the zone has one, else the code URL.
             slug = ZONE_TO_SLUG.get(code)
-            canonical = f"{base_url}/zon/{slug}/" if slug else f"{base_url}/zon/{code}/"
-            return self.render_zone_page(code, base_url, canonical=canonical)
+            canonical = (
+                f"{site_origin}/zon/{slug}/" if slug else f"{site_origin}/zon/{code}/"
+            )
+            return self.render_zone_page(code, site_origin, canonical=canonical)
 
         # Root - default zone, overridable with ?zone=JHR02
         if path == "/":
             zone_param = parse_qs(url.query).get("zone", [None])[0]
-            return self.render_zone_page((zone_param or DEFAULT_ZONE).upper(), base_url)
+            return self.render_zone_page((zone_param or DEFAULT_ZONE).upper(), site_origin)
 
         return Response("Not Found", status=404)
 
@@ -233,7 +240,7 @@ class Default(WorkerEntrypoint):
             return None, None
         return "fajr", tmr["fajr"] + 1440
 
-    def render_zone_page(self, zone_code: str, base_url: str = "", canonical: str = None):
+    def render_zone_page(self, zone_code: str, site_origin: str = "", canonical: str = None):
         """Render the full SSR page for a zone, matching the original PWA."""
         found = get_zone_by_code(zone_code)
         if found is None:
@@ -342,7 +349,7 @@ class Default(WorkerEntrypoint):
             f"Isyak {west_times['isyak']}."
         )
         canonical = canonical if canonical is not None else (
-            f"{base_url}/zon/{ZONE_TO_SLUG.get(zone_code, zone_code)}/"
+            f"{site_origin}/zon/{ZONE_TO_SLUG.get(zone_code, zone_code)}/"
         )
 
         json_ld = {

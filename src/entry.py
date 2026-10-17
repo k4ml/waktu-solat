@@ -14,6 +14,13 @@ from zones import ZONES, get_zone_by_code, get_all_zones_flat
 # Default zone - the original PWA opens on Johor (JHR02).
 DEFAULT_ZONE = "JHR02"
 
+# Generic, app-level description used for the meta/OG/Twitter description on the
+# root page. Zone pages describe their own prayer times instead.
+SITE_DESCRIPTION = (
+    "Kalkulator waktu solat Malaysia yang boleh dipasang pada telefon "
+    "dan digunakan sepenuhnya tanpa internet selepas lawatan pertama."
+)
+
 # Prayer metadata with Arabic names (matching original design)
 PRAYERS = [
     {"key": "imsak", "name": "Imsak", "ar": "إمساك", "dim": True},
@@ -144,7 +151,11 @@ class Default(WorkerEntrypoint):
         # Root - default zone, overridable with ?zone=JHR02
         if path == "/":
             zone_param = parse_qs(url.query).get("zone", [None])[0]
-            return self.render_zone_page((zone_param or DEFAULT_ZONE).upper(), site_origin)
+            return self.render_zone_page(
+                (zone_param or DEFAULT_ZONE).upper(),
+                site_origin,
+                is_index=zone_param is None,
+            )
 
         return Response("Not Found", status=404)
 
@@ -240,7 +251,13 @@ class Default(WorkerEntrypoint):
             return None, None
         return "fajr", tmr["fajr"] + 1440
 
-    def render_zone_page(self, zone_code: str, site_origin: str = "", canonical: str = None):
+    def render_zone_page(
+        self,
+        zone_code: str,
+        site_origin: str = "",
+        canonical: str = None,
+        is_index: bool = False,
+    ):
         """Render the full SSR page for a zone, matching the original PWA."""
         found = get_zone_by_code(zone_code)
         if found is None:
@@ -341,16 +358,27 @@ class Default(WorkerEntrypoint):
 
         # SEO
         location = zone_name.split(" - ", 1)[1] if " - " in zone_name else zone_name
-        title = f"Waktu Solat {location} - {now.strftime('%Y-%m-%d')}"
+        if is_index:
+            # The root page is the app itself, not one zone.
+            title = "Waktu Solat Malaysia"
+        else:
+            title = f"Waktu Solat {location} - {now.strftime('%Y-%m-%d')}"
         description = (
             f"Waktu solat hari ini di {location}, {state}. "
             f"Subuh {west_times['fajr']}, Zohor {west_times['dhuhr']}, "
             f"Asar {west_times['asr']}, Maghrib {west_times['maghrib']}, "
             f"Isyak {west_times['isyak']}."
         )
-        canonical = canonical if canonical is not None else (
-            f"{site_origin}/zon/{ZONE_TO_SLUG.get(zone_code, zone_code)}/"
-        )
+        # The root page describes the app rather than a single zone; zone pages
+        # keep the specific, prayer-time description.
+        meta_description = SITE_DESCRIPTION if is_index else description
+        if canonical is None:
+            if is_index:
+                canonical = f"{site_origin}/"
+            else:
+                canonical = (
+                    f"{site_origin}/zon/{ZONE_TO_SLUG.get(zone_code, zone_code)}/"
+                )
 
         json_ld = {
             "@context": "https://schema.org",
@@ -375,7 +403,7 @@ class Default(WorkerEntrypoint):
 
         html = render_template(
             title=escape(title),
-            description=escape(description, quote=True),
+            description=escape(meta_description, quote=True),
             canonical=canonical,
             json_ld=json.dumps(json_ld, ensure_ascii=False),
             state_options=state_options,
@@ -445,11 +473,13 @@ class Default(WorkerEntrypoint):
     def serve_sw_js(self):
         """Serve the service worker for offline caching.
 
-        Same cache-first strategy and offline navigation fallback as the
-        original PWA, but the app shell caches the SSR homepage rather than
-        index.html, which this worker does not serve.
+        The SSR HTML bakes in the day's prayer times, so pages and the JSON API
+        are network-first: a cached copy would show stale times and a countdown
+        that has already run negative. The cache is kept purely as an offline
+        fallback, matching the original PWA's ability to load offline. Static
+        assets stay cache-first (they are versioned by CACHE_NAME).
         """
-        sw_js = """const CACHE_NAME = 'waktu-solat-v6';
+        sw_js = """const CACHE_NAME = 'waktu-solat-v7';
 const APP_SHELL = [
   './',
   '/manifest.webmanifest',
@@ -477,6 +507,29 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
+  const isNavigation = event.request.mode === 'navigate';
+  const isApi = new URL(event.request.url).pathname.startsWith('/api/');
+
+  // Pages and API: try the network first so SSR times are always current.
+  if (isNavigation || isApi) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.status === 200 && response.type !== 'opaque') {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
+        return response;
+      }).catch(() =>
+        caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          return isNavigation ? caches.match('./') : Response.error();
+        })
+      )
+    );
+    return;
+  }
+
+  // Static assets: cache-first, filling the cache on first use.
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -488,11 +541,6 @@ self.addEventListener('fetch', event => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         return response;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('./');
-        }
-        return cached;
       });
     })
   );

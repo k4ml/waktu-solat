@@ -323,6 +323,7 @@ function tickCountdown() {
   if (!el || !NEXT_AT_MS) return;
   let diff = Math.floor((NEXT_AT_MS - Date.now()) / 1000);
   if (diff < 0) diff += 86400;
+  if (diff < 0) { el.textContent = '--:--:--'; return; }
   el.textContent = pad2(Math.floor(diff / 3600)) + ':' + pad2(Math.floor((diff % 3600) / 60)) + ':' + pad2(diff % 60);
 }
 

@@ -22,8 +22,8 @@ while maintaining offline PWA support via service worker.
 │                      Browser                                │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │  Service Worker (Offline Cache)                     │   │
-│  │  - Caches app shell on install                      │   │
-│  │  - Cache-first with offline navigation fallback      │   │
+│  │  - Caches app shell + visited pages on install       │   │
+│  │  - Network-first for pages/API, cache-first assets   │   │
 │  │  - Falls back to cache when offline                 │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -46,10 +46,10 @@ while maintaining offline PWA support via service worker.
 ## SEO Features
 
 - **Server-rendered prayer times** in HTML (crawlable by search engines)
-- **Dynamic title**: "Waktu Solat Kuala Lumpur, Putrajaya - 2026-09-06"
-- **Canonical + og:url** per zone (dedupes `/`, `/?zone=`, and `/zon/<CODE>/` against `/zon/<slug>/`)
+- **Dynamic title**: zone pages use e.g. "Waktu Solat Kuala Lumpur, Putrajaya - 2026-09-06"; the root is "Waktu Solat Malaysia"
+- **Canonical + og:url**: the root (`/`) canonicalises to itself; `/?zone=`, `/zon/<CODE>/`, and `/zon/<slug>/` canonicalise to `/zon/<slug>/`
 - Canonical origin is set by the `SITE_ORIGIN` var rather than the request host. Redirects still use the request host. See [Preview deployments](#preview-deployments) for Preview behaviour.
-- **Meta description** with actual prayer times
+- **Meta description**: the root page describes the app; zone pages list that zone's prayer times
 - **Open Graph tags** for social sharing
 - **Twitter Card** meta tags
 - **JSON-LD structured data** for rich snippets
@@ -58,7 +58,7 @@ while maintaining offline PWA support via service worker.
 ## Offline Support
 
 - Service worker caches the app shell on first visit
-- Cache-first strategy for pages, with an offline navigation fallback
+- Network-first for pages and the JSON API (so SSR times never go stale), falling back to the cache when offline; static assets are cache-first
 - Full PWA installability: icons and maskable icon served from `public/`
 - Offline badge shown when network unavailable
 

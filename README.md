@@ -81,6 +81,10 @@ uvx --from workers-py pywrangler dev
 
 ### Deploy
 
+Production deploys on push to `main`, through the Cloudflare GitHub integration,
+so no local deploy step is needed. `uv run pywrangler deploy` remains available
+for a manual deploy:
+
 ```bash
 uv run pywrangler deploy
 ```

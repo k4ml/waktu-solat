@@ -10,7 +10,7 @@
 		"directory": "./public"
 	},
 	"vars": {
-		"SITE_ORIGIN": "https://waktu-solat.kamal-mustafa.workers.dev"
+		"SITE_ORIGIN": "https://solat.koditi.my"
 	},
 	"observability": {
 		"enabled": true

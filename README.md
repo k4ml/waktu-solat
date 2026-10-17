@@ -48,7 +48,7 @@ while maintaining offline PWA support via service worker.
 - **Server-rendered prayer times** in HTML (crawlable by search engines)
 - **Dynamic title**: "Waktu Solat Kuala Lumpur, Putrajaya - 2026-09-06"
 - **Canonical + og:url** per zone (dedupes `/`, `/?zone=`, and `/zon/<CODE>/` against `/zon/<slug>/`)
-- Canonical origin is set by the `SITE_ORIGIN` var, not the request host, so Preview and per-deployment hostnames all canonicalize to one URL. Redirects still use the request host.
+- Canonical origin is set by the `SITE_ORIGIN` var rather than the request host. Redirects still use the request host. See [Preview deployments](#preview-deployments) for Preview behaviour.
 - **Meta description** with actual prayer times
 - **Open Graph tags** for social sharing
 - **Twitter Card** meta tags
@@ -99,17 +99,18 @@ uv run pywrangler preview
 uv run pywrangler preview --name my-branch
 ```
 
-Each Preview needs its own `SITE_ORIGIN` under `previews.vars` so its canonical
-tags point at the Preview URL rather than the per-deployment hostname. The value
-is `https://<preview-name>-waktu-solat.kamal-mustafa.workers.dev`, where
-`<preview-name>` is the git branch (or whatever you pass to `--name`).
+Previews need no `SITE_ORIGIN` of their own. They do not inherit top-level vars,
+so with an empty `previews` block a Preview canonicalises to whichever host
+served the request: the Preview URL is correct, and the per-deployment URL
+(`<deployment-id>-…`) merely self-references. That is harmless because Cloudflare
+adds `X-Robots-Tag: noindex` to `workers.dev` Preview URLs.
 
-Branch config is the source of truth, so the value goes on the branch being
-previewed. A branch cut from another feature branch inherits that branch's
-`SITE_ORIGIN`; the mismatch only shows up as one Preview canonicalising to a
-sibling Preview. Previews are not indexed anyway — Cloudflare adds
-`X-Robots-Tag: noindex` to `workers.dev` Preview URLs — so this is correctness,
-not an SEO problem. Only the top-level value affects production.
+Add `previews.vars.SITE_ORIGIN` on a branch only if you also want the
+per-deployment URL to canonicalise to the Preview URL, for example
+`https://<preview-name>-waktu-solat.kamal-mustafa.workers.dev`, where
+`<preview-name>` is the git branch (or whatever you pass to `--name`). A branch
+cut from such a branch inherits the stale value, so leaving it out is the better
+default. Only the top-level `SITE_ORIGIN` affects production.
 
 ## File Structure
 

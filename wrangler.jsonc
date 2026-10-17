@@ -15,9 +15,5 @@
 	"observability": {
 		"enabled": true
 	},
-	"previews": {
-		"vars": {
-			"SITE_ORIGIN": "https://cloudflare-python-waktu-solat.kamal-mustafa.workers.dev"
-		}
-	}
+	"previews": {}
 }

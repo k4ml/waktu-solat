@@ -309,8 +309,11 @@ class Default(WorkerEntrypoint):
         zone_options = ""
         for zn, zn_data in ZONES[state].items():
             selected = " selected" if zn == zone_name else ""
+            # Option values are the canonical slug (e.g. kota-setar), not the
+            # JAKIM code, so the dropdown links to the SEO-friendly URL.
+            slug = ZONE_TO_SLUG.get(zn_data["zone"], zn_data["zone"])
             zone_options += (
-                f'        <option value="{escape(zn_data["zone"])}"{selected}>'
+                f'        <option value="{escape(slug)}"{selected}>'
                 f"{escape(zn)}</option>\n"
             )
 
@@ -417,7 +420,14 @@ class Default(WorkerEntrypoint):
             countdown=countdown,
             prayer_rows=prayer_rows,
             zones_data=json.dumps(
-                {s: list(ZONES[s].keys()) for s in ZONES}, ensure_ascii=False
+                {
+                    s: [
+                        [zn, ZONE_TO_SLUG.get(d["zone"], d["zone"])]
+                        for zn, d in ZONES[s].items()
+                    ]
+                    for s in ZONES
+                },
+                ensure_ascii=False,
             ),
             next_at_ms=next_at_ms,
             current_state=json.dumps(state),
@@ -437,8 +447,9 @@ class Default(WorkerEntrypoint):
         zones = get_all_zones_flat()
         options = ""
         for z in zones:
+            slug = ZONE_TO_SLUG.get(z["zone"], z["zone"])
             options += (
-                f'        <option value="{escape(z["zone"])}">'
+                f'        <option value="{escape(slug)}">'
                 f"{escape(z['state'])} - {escape(z['zone_name'])}</option>\n"
             )
 

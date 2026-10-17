@@ -301,12 +301,12 @@ function saveSelection(state, zone) {
 function changeState(state) {
   const zones = ZONES_DATA[state];
   const select = document.getElementById('zoneSelect');
-  select.innerHTML = zones.map(function (z) { return '<option value="' + z.split(' - ')[0] + '">' + z + '</option>'; }).join('');
-  changeZone(zones[0].split(' - ')[0]);
+  select.innerHTML = zones.map(function (z) { return '<option value="' + z[1] + '">' + z[0] + '</option>'; }).join('');
+  changeZone(zones[0][1]);
 }
 
-function changeZone(code) {
-  window.location.href = '/zon/' + code;
+function changeZone(slug) {
+  window.location.href = '/zon/' + slug + '/';
 }
 
 // Record the zone this page was rendered for, using the same key and shape as

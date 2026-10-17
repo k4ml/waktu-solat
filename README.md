@@ -100,9 +100,16 @@ uv run pywrangler preview --name my-branch
 ```
 
 Each Preview needs its own `SITE_ORIGIN` under `previews.vars` so its canonical
-tags point at the Preview URL (`https://<preview-name>-waktu-solat.<subdomain>.workers.dev`)
-rather than the per-deployment hostname. Branch config is the source of truth,
-so set it on the branch you are previewing.
+tags point at the Preview URL rather than the per-deployment hostname. The value
+is `https://<preview-name>-waktu-solat.kamal-mustafa.workers.dev`, where
+`<preview-name>` is the git branch (or whatever you pass to `--name`).
+
+Branch config is the source of truth, so the value goes on the branch being
+previewed. A branch cut from another feature branch inherits that branch's
+`SITE_ORIGIN`; the mismatch only shows up as one Preview canonicalising to a
+sibling Preview. Previews are not indexed anyway — Cloudflare adds
+`X-Robots-Tag: noindex` to `workers.dev` Preview URLs — so this is correctness,
+not an SEO problem. Only the top-level value affects production.
 
 ## File Structure
 

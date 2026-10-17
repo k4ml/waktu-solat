@@ -306,7 +306,7 @@ function changeState(state) {
 }
 
 function changeZone(code) {
-  window.location.href = '/zone/' + code;
+  window.location.href = '/zon/' + code;
 }
 
 // Record the zone this page was rendered for, using the same key and shape as

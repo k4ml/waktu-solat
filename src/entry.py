@@ -46,6 +46,8 @@ def _slugify(text: str) -> str:
 
 
 # Map SEO-friendly slugs to JAKIM zone codes (e.g. /zon/johor-bahru/).
+# The reverse map gives each zone's canonical slug; zones without one are
+# served (and canonicalized) at their code URL, /zon/<code>/.
 SLUG_TO_ZONE = {}
 _zone_slugs_seen = set()
 for _state, _zones in ZONES.items():
@@ -59,6 +61,14 @@ for _state, _zones in ZONES.items():
             slug = _slugify(primary + "-" + _state)
         _zone_slugs_seen.add(slug)
         SLUG_TO_ZONE[slug] = code
+ZONE_TO_SLUG = {code: slug for slug, code in SLUG_TO_ZONE.items()}
+
+
+def _is_zone_code(text: str) -> bool:
+    """A JAKIM zone code like JHR02 (letters + digits), not a slug."""
+    return len(text) == 5 and text[:3].isalpha() and text[3:].isdigit()
+
+
 # prayer countdown. Imsak and Syuruk are excluded, as in the original.
 ACTIVE_KEYS = ["fajr", "dhuhr", "asr", "maghrib", "isyak"]
 
@@ -88,9 +98,14 @@ class Default(WorkerEntrypoint):
 
         path = original_path.rstrip("/") or "/"
 
-        # API endpoint for JSON data
-        if path.startswith("/api/zone/"):
+        # API endpoint for JSON data: /api/zon/JHR02/
+        if path.startswith("/api/zon/"):
             return self.api_zone(path.split("/")[-1].upper())
+
+        # Legacy API path: /api/zone/JHR02 -> /api/zon/JHR02/
+        if path.startswith("/api/zone/"):
+            code = path.split("/")[-1].upper()
+            return Response("", status=301, headers={"Location": f"{base_url}/api/zon/{code}/"})
 
         # Service worker
         if path == "/sw.js":
@@ -100,19 +115,24 @@ class Default(WorkerEntrypoint):
         if path == "/manifest.webmanifest":
             return self.serve_manifest()
 
-        # Zone page: /zone/JHR02
+        # Zone page: /zon/JHR02 or /zon/johor-bahru/ (legacy /zone/... redirects)
         if path.startswith("/zone/"):
-            return self.render_zone_page(path.split("/")[-1].upper(), base_url)
-
-        # Zone page alias: /zon/kuala-lumpur/
-        if path.startswith("/zon/"):
-            slug = path.strip("/").split("/")[-1]
-            code = SLUG_TO_ZONE.get(slug)
-            if code is None:
+            segment = path.strip("/").split("/")[-1]
+            code = segment.upper() if _is_zone_code(segment) else SLUG_TO_ZONE.get(segment)
+            if code is None or get_zone_by_code(code) is None:
                 return Response("Not Found", status=404)
-            return self.render_zone_page(
-                code, base_url, canonical=f"{base_url}/zon/{slug}/"
-            )
+            slug = ZONE_TO_SLUG.get(code)
+            target = f"zon/{slug}" if slug else f"zon/{code}"
+            return Response("", status=301, headers={"Location": f"{base_url}/{target}/"})
+        if path.startswith("/zon/"):
+            segment = path.strip("/").split("/")[-1]
+            code = segment.upper() if _is_zone_code(segment) else SLUG_TO_ZONE.get(segment)
+            if code is None or get_zone_by_code(code) is None:
+                return Response("Not Found", status=404)
+            # Canonical: the slug URL when the zone has one, else the code URL.
+            slug = ZONE_TO_SLUG.get(code)
+            canonical = f"{base_url}/zon/{slug}/" if slug else f"{base_url}/zon/{code}/"
+            return self.render_zone_page(code, base_url, canonical=canonical)
 
         # Root - default zone, overridable with ?zone=JHR02
         if path == "/":
@@ -321,7 +341,9 @@ class Default(WorkerEntrypoint):
             f"Asar {west_times['asr']}, Maghrib {west_times['maghrib']}, "
             f"Isyak {west_times['isyak']}."
         )
-        canonical = canonical if canonical is not None else f"{base_url}/zone/{zone_code}/"
+        canonical = canonical if canonical is not None else (
+            f"{base_url}/zon/{ZONE_TO_SLUG.get(zone_code, zone_code)}/"
+        )
 
         json_ld = {
             "@context": "https://schema.org",
@@ -405,7 +427,7 @@ class Default(WorkerEntrypoint):
   <div class="container">
     <h1>🕌 Waktu Solat Malaysia</h1>
     <p class="msg">{escape(message)}</p>
-    <select onchange="if(this.value) window.location.href='/zone/'+this.value">
+    <select onchange="if(this.value) window.location.href='/zon/'+this.value">
       <option value="">Pilih Zon...</option>
 {options}    </select>
   </div>

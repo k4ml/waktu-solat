@@ -34,9 +34,10 @@ while maintaining offline PWA support via service worker.
 | URL | Description |
 |-----|-------------|
 | `/` | Default zone (JHR02 - Johor) |
-| `/zone/JHR02` | Specific zone page (SSR) |
+| `/zon/<slug>/` | Zone page by place slug, e.g. `/zon/johor-bahru/` (canonical) |
+| `/zon/<CODE>/` | Zone page by JAKIM code, e.g. `/zon/JHR02/` |
 | `/?zone=JHR02` | Query param alternative |
-| `/api/zone/JHR02` | JSON API for zone |
+| `/api/zon/<CODE>/` | JSON API for zone, e.g. `/api/zon/JHR02/` |
 | `/sw.js` | Service worker |
 | `/manifest.webmanifest` | PWA manifest |
 | `/icons/*` | App icons (static assets) |
@@ -46,7 +47,7 @@ while maintaining offline PWA support via service worker.
 
 - **Server-rendered prayer times** in HTML (crawlable by search engines)
 - **Dynamic title**: "Waktu Solat Kuala Lumpur, Putrajaya - 2026-09-06"
-- **Canonical + og:url** per zone (dedupes `/` and `/?zone=` against `/zone/`)
+- **Canonical + og:url** per zone (dedupes `/`, `/?zone=`, and `/zon/<CODE>/` against `/zon/<slug>/`)
 - **Meta description** with actual prayer times
 - **Open Graph tags** for social sharing
 - **Twitter Card** meta tags

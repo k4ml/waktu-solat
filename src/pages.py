@@ -17,7 +17,7 @@ from content import (
     get_panduan,
 )
 from md import render as render_markdown
-from template import OG_IMAGE_PATH, OG_IMAGE_ALT
+from template import OG_IMAGE_PATH, OG_IMAGE_ALT, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT
 
 # Shared by every page kind. Conventions match template.py: @@NAME@@ markers so
 # the surrounding CSS/HTML needs no escaping.
@@ -43,12 +43,12 @@ _SHELL_HEAD = """<!DOCTYPE html>
 <meta property="og:site_name" content="Waktu Solat Malaysia">
 <meta property="og:image" content="@@OG_IMAGE@@">
 <meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="@@OG_IMAGE_WIDTH@@">
+<meta property="og:image:height" content="@@OG_IMAGE_HEIGHT@@">
 <meta property="og:image:alt" content="@@OG_IMAGE_ALT@@">
 
 <!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="@@TITLE@@">
 <meta name="twitter:description" content="@@DESCRIPTION@@">
 <meta name="twitter:image" content="@@OG_IMAGE@@">
@@ -202,6 +202,8 @@ def _shell(title, description, canonical, json_ld, body, active="", og_type="art
         og_type=og_type,
         og_image=og_image or OG_IMAGE_PATH,
         og_image_alt=escape(OG_IMAGE_ALT, quote=True),
+        og_image_width=OG_IMAGE_WIDTH,
+        og_image_height=OG_IMAGE_HEIGHT,
         json_ld=json.dumps(json_ld, ensure_ascii=False),
         menu=_main_menu(active),
         body=body,

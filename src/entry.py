@@ -9,6 +9,7 @@ from workers import Response, WorkerEntrypoint
 
 from prayer import calc_times, fmt_min, diff_str, to_hijri, MYT
 from template import render as render_template
+from template import OG_IMAGE_PATH, OG_IMAGE_ALT
 from zones import ZONES, get_zone_by_code, get_all_zones_flat
 from content import all_articles, all_panduan
 from pages import (
@@ -443,6 +444,8 @@ class Default(WorkerEntrypoint):
             title=escape(title),
             description=escape(meta_description, quote=True),
             canonical=canonical,
+            og_image=f"{site_origin}{OG_IMAGE_PATH}",
+            og_image_alt=escape(OG_IMAGE_ALT, quote=True),
             json_ld=json.dumps(json_ld, ensure_ascii=False),
             state_options=state_options,
             zone_options=zone_options,

@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" role="img" aria-label="Waktu Solat Malaysia">
+  <title>Waktu Solat Malaysia</title>
+
+  <defs>
+    <!-- Brand palette mirrors index.html :root tokens -->
+    <linearGradient id="ws-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16212c"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <linearGradient id="ws-ivory" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f2ece0"/>
+      <stop offset="100%" stop-color="#cbc2af"/>
+    </linearGradient>
+    <linearGradient id="ws-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8c97a"/>
+      <stop offset="100%" stop-color="#c9a84c"/>
+    </linearGradient>
+    <linearGradient id="ws-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3da99f"/>
+      <stop offset="100%" stop-color="#2a7a72"/>
+    </linearGradient>
+    <linearGradient id="ws-hair" gradientUnits="userSpaceOnUse" x1="156" y1="0" x2="356" y2="0">
+      <stop offset="0%" stop-color="#c9a84c" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#c9a84c" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#c9a84c" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Ambient glows: same radial washes as body::before -->
+    <radialGradient id="ws-glow-teal" cx="50%" cy="0%" r="65%">
+      <stop offset="0%" stop-color="#2a7a72" stop-opacity="0.30"/>
+      <stop offset="60%" stop-color="#2a7a72" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ws-glow-gold" cx="100%" cy="100%" r="70%">
+      <stop offset="0%" stop-color="#c9a84c" stop-opacity="0.16"/>
+      <stop offset="55%" stop-color="#c9a84c" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Girih / triangular grid, echoing the .geo overlay -->
+    <pattern id="ws-geo-h" patternUnits="userSpaceOnUse" width="64" height="64">
+      <line x1="0" y1="0" x2="64" y2="0" stroke="#c9a84c" stroke-width="1"/>
+    </pattern>
+    <pattern id="ws-geo-a" patternUnits="userSpaceOnUse" width="64" height="64" patternTransform="rotate(60)">
+      <line x1="0" y1="0" x2="64" y2="0" stroke="#c9a84c" stroke-width="1"/>
+    </pattern>
+    <pattern id="ws-geo-b" patternUnits="userSpaceOnUse" width="64" height="64" patternTransform="rotate(-60)">
+      <line x1="0" y1="0" x2="64" y2="0" stroke="#c9a84c" stroke-width="1"/>
+    </pattern>
+
+    <filter id="ws-glow-crescent" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#e8c97a" flood-opacity="0.55"/>
+    </filter>
+    <filter id="ws-glow-orbit" x="-30%" y="-120%" width="160%" height="340%">
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#3da99f" flood-opacity="0.5"/>
+    </filter>
+
+    <clipPath id="ws-frame">
+      <rect width="512" height="512" rx="112"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#ws-frame)">
+    <!-- Background -->
+    <rect width="512" height="512" fill="url(#ws-bg)"/>
+    <g opacity="0.05">
+      <rect width="512" height="512" fill="url(#ws-geo-h)"/>
+      <rect width="512" height="512" fill="url(#ws-geo-a)"/>
+      <rect width="512" height="512" fill="url(#ws-geo-b)"/>
+    </g>
+    <rect width="512" height="512" fill="url(#ws-glow-teal)"/>
+    <rect width="512" height="512" fill="url(#ws-glow-gold)"/>
+    <rect x="1" y="1" width="510" height="510" rx="111" fill="none" stroke="#c9a84c" stroke-opacity="0.12"/>
+  </g>
+
+  <!-- Emblem group: scaled up and nudged down to close the gap to the wordmark -->
+  <g transform="translate(256,186) scale(1.08) translate(-256,-170)">
+
+  <!-- Night sky accents -->
+  <polygon points="150.0,92.0 155.1,104.9 168.0,110.0 155.1,115.1 150.0,128.0 144.9,115.1 132.0,110.0 144.9,104.9"
+           fill="url(#ws-teal)" opacity="0.9"/>
+  <polygon points="378.0,123.0 380.5,129.5 387.0,132.0 380.5,134.5 378.0,141.0 375.5,134.5 369.0,132.0 375.5,129.5"
+           fill="url(#ws-gold)" opacity="0.55"/>
+
+  <!-- BACK HALF OF 3D ORBIT (drawn before the mosque so it sits behind it) -->
+  <g transform="translate(256,200) rotate(-18) scale(1,0.3765)">
+    <circle r="170" fill="none" stroke="#2a7a72" stroke-width="5" opacity="0.4"
+            stroke-dasharray="110 46 26 46" stroke-linecap="round" vector-effect="non-scaling-stroke"
+            pathLength="1000"/>
+    <path d="M -170,0 A 170,170 0 0 1 170,0" fill="none" stroke="#3da99f" stroke-width="6"
+          opacity="0.35" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  </g>
+
+  <!-- MOSQUE SILHOUETTE -->
+  <g stroke="#c9a84c" stroke-opacity="0.35" stroke-width="1.5" stroke-linejoin="round">
+    <!-- Flanking domes -->
+    <path d="M154,288 L154,272 C154,256 162,244 175,244 C188,244 196,256 196,272 L196,288 Z" fill="url(#ws-ivory)"/>
+    <path d="M316,288 L316,272 C316,256 324,244 337,244 C350,244 358,256 358,272 L358,288 Z" fill="url(#ws-ivory)"/>
+    <!-- Central onion dome -->
+    <path d="M196,288 L196,240 C188,196 220,150 256,112 C292,150 324,196 316,240 L316,288 Z" fill="url(#ws-ivory)"/>
+    <!-- Plinth -->
+    <rect x="142" y="286" width="228" height="18" rx="9" fill="url(#ws-ivory)"/>
+  </g>
+  <!-- Prayer-hall archway cut from the silhouette -->
+  <path d="M238,290 L238,262 C238,250 246,241 256,233 C266,241 274,250 274,262 L274,290 Z"
+        fill="#0d1117" opacity="0.92"/>
+  <path d="M238,290 L238,262 C238,250 246,241 256,233 C266,241 274,250 274,262 L274,290"
+        fill="none" stroke="#3da99f" stroke-opacity="0.5" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- FRONT HALF OF 3D ORBIT (over the mosque for depth) -->
+  <g transform="translate(256,200) rotate(-18) scale(1,0.3765)" filter="url(#ws-glow-orbit)">
+    <path d="M 170,0 A 170,170 0 0 1 -170,0" fill="none" stroke="url(#ws-teal)" stroke-width="9"
+          stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    <!-- Orbiting marker: the next prayer time -->
+    <circle cx="126" cy="120" r="8" fill="url(#ws-gold)" vector-effect="non-scaling-stroke"/>
+  </g>
+
+  <!-- Crescent finial (brand mark from icons/icon.svg) -->
+  <g filter="url(#ws-glow-crescent)" transform="translate(256,70) scale(0.25) translate(-279,-252)">
+    <path d="M303 124c-64 0-116 58-116 128s52 128 116 128c34 0 66-14 88-39-18 53-69 91-129 91-75 0-136-60-136-135s61-135 136-135c60 0 111 38 129 91-22-25-54-39-88-39z"
+          fill="url(#ws-gold)"/>
+  </g>
+
+  </g>
+
+  <!-- Wordmark -->
+  <text x="256" y="388" font-family="'Noto Naskh Arabic','Amiri','Scheherazade New','Times New Roman',serif"
+        font-size="48" font-weight="700" fill="url(#ws-gold)" text-anchor="middle">وقت الصلاة</text>
+  <text x="256" y="416" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="14"
+        font-weight="600" letter-spacing="4.5" fill="#e8e0d0" fill-opacity="0.6" text-anchor="middle">WAKTU SOLAT MALAYSIA</text>
+  <line x1="156" y1="440" x2="356" y2="440" stroke="url(#ws-hair)" stroke-width="2"/>
+  <text x="256" y="465" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13"
+        font-weight="600" letter-spacing="2.5" fill="#3da99f" fill-opacity="0.85" text-anchor="middle">koditi.my</text>
+</svg>

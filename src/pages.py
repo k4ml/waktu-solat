@@ -17,6 +17,7 @@ from content import (
     get_panduan,
 )
 from md import render as render_markdown
+from template import OG_IMAGE_PATH, OG_IMAGE_ALT
 
 # Shared by every page kind. Conventions match template.py: @@NAME@@ markers so
 # the surrounding CSS/HTML needs no escaping.
@@ -39,11 +40,19 @@ _SHELL_HEAD = """<!DOCTYPE html>
 <meta property="og:title" content="@@TITLE@@">
 <meta property="og:description" content="@@DESCRIPTION@@">
 <meta property="og:locale" content="ms_MY">
+<meta property="og:site_name" content="Waktu Solat Malaysia">
+<meta property="og:image" content="@@OG_IMAGE@@">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="@@OG_IMAGE_ALT@@">
 
 <!-- Twitter -->
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="@@TITLE@@">
 <meta name="twitter:description" content="@@DESCRIPTION@@">
+<meta name="twitter:image" content="@@OG_IMAGE@@">
+<meta name="twitter:image:alt" content="@@OG_IMAGE_ALT@@">
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -184,13 +193,15 @@ def notice_banner(now=None) -> str:
     return "\n".join(blocks)
 
 
-def _shell(title, description, canonical, json_ld, body, active="", og_type="article") -> str:
+def _shell(title, description, canonical, json_ld, body, active="", og_type="article", og_image="") -> str:
     return _sub(
         _SHELL_HEAD + "@@BODY@@" + _FOOTER,
         title=escape(title),
         description=escape(description, quote=True),
         canonical=canonical,
         og_type=og_type,
+        og_image=og_image or OG_IMAGE_PATH,
+        og_image_alt=escape(OG_IMAGE_ALT, quote=True),
         json_ld=json.dumps(json_ld, ensure_ascii=False),
         menu=_main_menu(active),
         body=body,
@@ -239,6 +250,7 @@ def render_article(slug: str, site_origin: str = ""):
         json_ld=json_ld,
         body=body,
         active="artikel",
+        og_image=f"{site_origin}{OG_IMAGE_PATH}",
     )
 
 
@@ -267,6 +279,7 @@ def render_panduan(slug: str, site_origin: str = ""):
         json_ld=json_ld,
         body=body,
         active="panduan",
+        og_image=f"{site_origin}{OG_IMAGE_PATH}",
     )
 
 
@@ -323,6 +336,7 @@ def render_index(site_origin: str = "", now=None) -> str:
         body="\n".join(parts),
         active="artikel",
         og_type="website",
+        og_image=f"{site_origin}{OG_IMAGE_PATH}",
     )
 
 
@@ -378,6 +392,7 @@ def render_panduan_index(site_origin: str = "", now=None) -> str:
         body="\n".join(parts),
         active="panduan",
         og_type="website",
+        og_image=f"{site_origin}{OG_IMAGE_PATH}",
     )
 
 

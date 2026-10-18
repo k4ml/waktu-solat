@@ -29,11 +29,19 @@ PAGE = """<!DOCTYPE html>
 <meta property="og:title" content="@@TITLE@@">
 <meta property="og:description" content="@@DESCRIPTION@@">
 <meta property="og:locale" content="ms_MY">
+<meta property="og:site_name" content="Waktu Solat Malaysia">
+<meta property="og:image" content="@@OG_IMAGE@@">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="@@OG_IMAGE_ALT@@">
 
 <!-- Twitter -->
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="@@TITLE@@">
 <meta name="twitter:description" content="@@DESCRIPTION@@">
+<meta name="twitter:image" content="@@OG_IMAGE@@">
+<meta name="twitter:image:alt" content="@@OG_IMAGE_ALT@@">
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -419,6 +427,16 @@ if ('serviceWorker' in navigator) {
 </body>
 </html>
 """
+
+
+# Social card (og:image / twitter:image). The raster is committed to
+# public/og-image.png and served as a static asset; the absolute URL is built by
+# the worker from SITE_ORIGIN.
+OG_IMAGE_PATH = "/og-image.png"
+OG_IMAGE_ALT = (
+    "Waktu Solat Malaysia — logo bulan sabit dan siluet masjid, dengan jadual "
+    "waktu solat JAKIM bagi 59 zon."
+)
 
 
 def render(**values) -> str:

@@ -3,6 +3,11 @@ created-by = "uv"
 requires-python = ">=3.13.2"
 
 [[packages]]
+name = "mistune"
+version = "3.3.4"
+wheels = [{ url = "https://files.pythonhosted.org/packages/77/e4/288365afae98953bc01de09f686f40d8ee84578135aa7767d5d4e60b5278/mistune-3.3.4-py3-none-any.whl", upload-time = 2026-07-22T05:22:29Z, size = 66862, hashes = { sha256 = "ee015381e955e370962968befe1d729ab60fafb6a715ac6751763fbce38c8d4a" } }]
+
+[[packages]]
 name = "workers-runtime-sdk"
 version = "1.9.3"
 wheels = [{ url = "https://files.pythonhosted.org/packages/aa/06/9472faa56bf7f3925d1128fda0532a9ec8adf3291a6003a4cf9c9d7972d0/workers_runtime_sdk-1.9.3-py3-none-any.whl", upload-time = 2026-10-06T04:01:16Z, size = 39541, hashes = { sha256 = "b3982ef01b824703258bbdd2c65980b8acc64f9dc5797f6b193eaf4f0808860f" } }]

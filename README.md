@@ -38,6 +38,10 @@ while maintaining offline PWA support via service worker.
 | `/zon/<CODE>/` | Zone page by JAKIM code, e.g. `/zon/JHR02/` |
 | `/?zone=JHR02` | Query param alternative |
 | `/api/zon/<CODE>/` | JSON API for zone, e.g. `/api/zon/JHR02/` |
+| `/artikel/` | Article index (guides) |
+| `/artikel/<slug>/` | Article page, e.g. `/artikel/cara-menentukan-zon-waktu-solat/` |
+| `/sitemap.xml` | Sitemap (root, zone pages and articles) |
+| `/robots.txt` | Robots file pointing at the sitemap |
 | `/sw.js` | Service worker |
 | `/manifest.webmanifest` | PWA manifest |
 | `/icons/*` | App icons (static assets) |
@@ -54,6 +58,8 @@ while maintaining offline PWA support via service worker.
 - **Twitter Card** meta tags
 - **JSON-LD structured data** for rich snippets
 - **Per-zone URLs** for indexing (59 zones = 59 indexable pages)
+- **Articles** at `/artikel/<slug>/` with `BlogPosting` structured data
+- **`sitemap.xml`** listing every indexable URL, referenced from `robots.txt`
 
 ## Offline Support
 
@@ -61,6 +67,52 @@ while maintaining offline PWA support via service worker.
 - Network-first for pages and the JSON API (so SSR times never go stale), falling back to the cache when offline; static assets are cache-first
 - Full PWA installability: icons and maskable icon served from `public/`
 - Offline badge shown when network unavailable
+
+## Managing Content
+
+Content lives in the repository as plain Python modules, so it is bundled into
+the Worker automatically. There is no CMS, database or build step: edit a file,
+commit, and the GitHub integration deploys it. Everything can also be edited
+straight from GitHub's web editor (open the file, click the pencil, commit).
+
+All content is under `src/content/`:
+
+| What | Where | Published at |
+|------|-------|--------------|
+| Articles | `src/content/artikel_*.py` | `/artikel/<slug>/` |
+| Article index | generated from `ARTIKEL` | `/artikel/` |
+| Announcements | `PENGUMUMAN` in `src/content/__init__.py` | banner on every prayer-time page |
+
+### Adding an article
+
+1. Copy an existing file, e.g. `artikel_cara_menentukan_zon.py`, to
+   `artikel_<slug>.py`.
+2. Set `SLUG`, `TITLE`, `DESCRIPTION`, `DATE` (ISO, e.g. `2026-10-18`) and
+   `BODY`. `BODY` is Markdown: headings, lists, tables, links, code and inline
+   HTML all render.
+3. Import the module in `src/content/__init__.py` and add its `ARTICLE` dict to
+   the `ARTIKEL` list.
+
+The article then appears on `/artikel/` (newest first) and gets its own
+SEO-ready page at `/artikel/<slug>/`, including canonical, Open Graph, Twitter
+card and `BlogPosting` JSON-LD. `sitemap.xml` picks it up automatically.
+
+### Adding an announcement
+
+Append a dict to `PENGUMUMAN` in `src/content/__init__.py`:
+
+```python
+{
+    "id": "ramadan-1448",
+    "text": "Jadual waktu solat Ramadan telah dikemas kini.",
+    "url": "/artikel/cara-menentukan-zon-waktu-solat/",  # optional link
+    "from": "2027-02-01",   # optional, inclusive; None = always active
+    "until": "2027-03-31",  # optional, inclusive
+}
+```
+
+`text` is plain text (escaped for you). The banner shows on every zone page
+while today falls inside the `from`/`until` window.
 
 ## Local Development
 
@@ -123,6 +175,9 @@ default. Only the top-level `SITE_ORIGIN` affects production.
 ├── src/
 │   ├── entry.py          # Worker entry point (SSR handler, sw.js + manifest)
 │   ├── template.py       # Page template (mirrors index.html markup/CSS/JS)
+│   ├── pages.py          # Article/index/sitemap HTML
+│   ├── md.py             # Markdown renderer (mistune)
+│   ├── content/          # Editable content: articles + announcements
 │   ├── prayer.py         # Calculation engine
 │   └── zones.py          # Zone data
 ├── public/               # Static assets served by the worker

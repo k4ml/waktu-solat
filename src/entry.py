@@ -10,6 +10,8 @@ from workers import Response, WorkerEntrypoint
 from prayer import calc_times, fmt_min, diff_str, to_hijri, MYT
 from template import render as render_template
 from zones import ZONES, get_zone_by_code, get_all_zones_flat
+from content import active_announcements, all_articles, get_article
+from pages import notice_banner, render_article, render_index, render_sitemap
 
 # Default zone - the original PWA opens on Johor (JHR02).
 DEFAULT_ZONE = "JHR02"
@@ -126,6 +128,22 @@ class Default(WorkerEntrypoint):
         # Manifest
         if path == "/manifest.webmanifest":
             return self.serve_manifest()
+
+        # Content pages: /artikel/ and /artikel/<slug>/
+        if path == "/artikel":
+            return self.serve_content_page(render_index(site_origin))
+        if path.startswith("/artikel/"):
+            slug = path.strip("/").split("/")[-1]
+            html = render_article(slug, site_origin)
+            if html is None:
+                return Response("Not Found", status=404)
+            return self.serve_content_page(html)
+
+        # Sitemap and robots for crawlers
+        if path == "/sitemap.xml":
+            return self.serve_sitemap(site_origin)
+        if path == "/robots.txt":
+            return self.serve_robots(site_origin)
 
         # Zone page: /zon/JHR02 or /zon/johor-bahru/ (legacy /zone/... redirects)
         if path.startswith("/zone/"):
@@ -432,6 +450,7 @@ class Default(WorkerEntrypoint):
             next_at_ms=next_at_ms,
             current_state=json.dumps(state),
             current_zone=json.dumps(zone_name),
+            announcement=notice_banner(now),
         )
 
         return Response(
@@ -600,6 +619,50 @@ self.addEventListener('fetch', event => {
         return Response(
             json.dumps(manifest, ensure_ascii=False),
             headers={"Content-Type": "application/manifest+json"},
+        )
+
+    def serve_content_page(self, html: str):
+        """Serve an article/index page. Content changes on deploy, not by time."""
+        return Response(
+            html,
+            headers={
+                "Content-Type": "text/html; charset=utf-8",
+                "Cache-Control": "public, max-age=300",
+            },
+        )
+
+    def serve_sitemap(self, site_origin: str):
+        """List every indexable URL: root, zone pages, article index/articles."""
+        urls = [(f"{site_origin}/", None)]
+        for code in sorted(ZONE_TO_SLUG):
+            slug = ZONE_TO_SLUG[code]
+            urls.append((f"{site_origin}/zon/{slug}/", None))
+        # Zones without a slug are canonically served at their code URL.
+        for zone in get_all_zones_flat():
+            code = zone["zone"]
+            if code not in ZONE_TO_SLUG:
+                urls.append((f"{site_origin}/zon/{code}/", None))
+        urls.append((f"{site_origin}/artikel/", None))
+        for article in all_articles():
+            urls.append(
+                (f"{site_origin}/artikel/{article['SLUG']}/", str(article["DATE"]))
+            )
+        return Response(
+            render_sitemap(urls),
+            headers={
+                "Content-Type": "application/xml; charset=utf-8",
+                "Cache-Control": "public, max-age=3600",
+            },
+        )
+
+    def serve_robots(self, site_origin: str):
+        """Allow crawling and point crawlers at the sitemap."""
+        return Response(
+            f"User-agent: *\nAllow: /\n\nSitemap: {site_origin}/sitemap.xml\n",
+            headers={
+                "Content-Type": "text/plain; charset=utf-8",
+                "Cache-Control": "public, max-age=3600",
+            },
         )
 
 

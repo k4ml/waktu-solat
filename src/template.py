@@ -94,6 +94,12 @@ PAGE = """<!DOCTYPE html>
   .info-note{background:rgba(42,122,114,.1);border:1px solid rgba(42,122,114,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11.5px;color:var(--text-dim);line-height:1.6;font-style:italic;}
   .info-note b{color:var(--gold);font-style:normal;}
 
+  /* ── Announcements (content/announcements) ── */
+  .notice{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.28);border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;color:var(--text-dim);line-height:1.6;display:flex;gap:9px;align-items:flex-start;}
+  .notice-tag{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:999px;padding:3px 7px;white-space:nowrap;font-weight:600;flex-shrink:0;margin-top:1px;}
+  .notice a{color:var(--gold-light);text-decoration:none;}
+  .notice a:hover{text-decoration:underline;}
+
   .date-strip{display:flex;align-items:center;justify-content:space-between;background:var(--gold-dim);border:1px solid var(--border);border-radius:8px;padding:9px 14px;margin-bottom:12px;}
   .date-hijri{font-family:var(--arabic);font-size:14px;color:var(--gold-light);}
   .date-miladi{font-size:13px;color:var(--text-dim);font-style:italic;}
@@ -228,6 +234,7 @@ PAGE = """<!DOCTYPE html>
   </div>
 
   <div class="offline-chip" id="offlineChip">Mod luar talian aktif</div>
+@@ANNOUNCEMENT@@
 
   <div class="zone-wrap">
     <span class="zone-label">Pilih Negeri &amp; Zon</span>
@@ -278,6 +285,7 @@ PAGE = """<!DOCTYPE html>
     <p>Kaedah <span>JAKIM</span> · Anugraha "Mekanika Benda Langit" · MKI Ke-116 (2019)</p>
     <p>Subuh 18°+2′ · Zohor +2′ · Asar +3′ · Maghrib +1′ · Isyak +2′</p>
     <p style="margin-top:8px;opacity:.8;">Oleh <a href="https://kamal.koditi.my/" target="_blank" style="color:var(--gold);text-decoration:none;">kamal.koditi.my</a> · Maklum balas: <a href="https://x.com/k4ml" target="_blank" style="color:var(--gold);text-decoration:none;">@k4ml</a></p>
+    <p style="margin-top:10px;"><a href="/artikel/" style="color:var(--gold);text-decoration:none;">Artikel &amp; Panduan</a></p>
     <p style="margin-top:12px;">
       <button class="info-link" onclick="openModal()">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>

@@ -163,6 +163,17 @@ for a manual deploy:
 uv run pywrangler deploy
 ```
 
+The integration's **build commands must go through `pywrangler`**, because only
+that runs `pywrangler sync` to install `[project] dependencies` into the bundle.
+Plain `wrangler deploy` builds local modules + the Workers runtime SDK only, so
+any Python dependency then fails at deploy with `ModuleNotFoundError`
+(`[code: 10021]`).
+
+```
+Deploy command:  uv run pywrangler deploy
+Version command: uv run pywrangler versions upload
+```
+
 ### Preview deployments
 
 Requires Wrangler 4.135.0+ (the version `pywrangler` resolves). Preview settings

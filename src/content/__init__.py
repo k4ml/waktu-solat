@@ -24,7 +24,11 @@ Append a dict to ``PENGUMUMAN``. ``text`` is plain text (escaped for you).
 
 from datetime import date, datetime
 
-from content import artikel_cara_menentukan_zon, artikel_mengapa_waktu_berbeza
+from content import (
+    artikel_cara_menentukan_zon,
+    artikel_mengapa_waktu_berbeza,
+    artikel_qaf_ai_rujukan_ilmu,
+)
 from content.panduan import PANDUAN
 
 # ---------------------------------------------------------------------------
@@ -33,6 +37,7 @@ from content.panduan import PANDUAN
 ARTIKEL = [
     artikel_cara_menentukan_zon.ARTICLE,
     artikel_mengapa_waktu_berbeza.ARTICLE,
+    artikel_qaf_ai_rujukan_ilmu.ARTICLE,
 ]
 
 # ---------------------------------------------------------------------------

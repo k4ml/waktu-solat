@@ -38,9 +38,11 @@ while maintaining offline PWA support via service worker.
 | `/zon/<CODE>/` | Zone page by JAKIM code, e.g. `/zon/JHR02/` |
 | `/?zone=JHR02` | Query param alternative |
 | `/api/zon/<CODE>/` | JSON API for zone, e.g. `/api/zon/JHR02/` |
-| `/artikel/` | Article index (guides) |
+| `/artikel/` | Article index |
 | `/artikel/<slug>/` | Article page, e.g. `/artikel/cara-menentukan-zon-waktu-solat/` |
-| `/sitemap.xml` | Sitemap (root, zone pages and articles) |
+| `/panduan/` | Guide index (Peringatan & Kaedah Pengiraan) |
+| `/panduan/<slug>/` | Guide page, e.g. `/panduan/ihtiyati/` |
+| `/sitemap.xml` | Sitemap (root, zone pages, articles and guides) |
 | `/robots.txt` | Robots file pointing at the sitemap |
 | `/sw.js` | Service worker |
 | `/manifest.webmanifest` | PWA manifest |
@@ -59,6 +61,7 @@ while maintaining offline PWA support via service worker.
 - **JSON-LD structured data** for rich snippets
 - **Per-zone URLs** for indexing (59 zones = 59 indexable pages)
 - **Articles** at `/artikel/<slug>/` with `BlogPosting` structured data
+- **Guide pages** at `/panduan/<slug>/` (penafian, zon, ihtiyati, kaedah pengiraan, isu teknikal, tarikh Hijri, dev tools)
 - **`sitemap.xml`** listing every indexable URL, referenced from `robots.txt`
 
 ## Offline Support
@@ -81,7 +84,12 @@ All content is under `src/content/`:
 |------|-------|--------------|
 | Articles | `src/content/artikel_*.py` | `/artikel/<slug>/` |
 | Article index | generated from `ARTIKEL` | `/artikel/` |
+| Guide pages | `src/content/panduan.py` | `/panduan/<slug>/` |
+| Guide index | generated from `PANDUAN` | `/panduan/` |
 | Announcements | `PENGUMUMAN` in `src/content/__init__.py` | banner on every prayer-time page |
+
+Every content page carries the top menu (`Artikel | Panduan`) and the site
+header, both linking back to the prayer-time app.
 
 ### Adding an article
 
@@ -97,22 +105,36 @@ The article then appears on `/artikel/` (newest first) and gets its own
 SEO-ready page at `/artikel/<slug>/`, including canonical, Open Graph, Twitter
 card and `BlogPosting` JSON-LD. `sitemap.xml` picks it up automatically.
 
+### Adding or editing a guide page
+
+Guide pages are the reference content under `/panduan/` — this is where the
+app's former "Peringatan & Kaedah Pengiraan" modal now lives. Append a dict to
+`PANDUAN` in `src/content/panduan.py` with `SLUG`, `TITLE`, `DESCRIPTION`, a
+Markdown `BODY` and an `ORDER` for its position in the index.
+
+Each entry becomes a real page at `/panduan/<slug>/`, listed on `/panduan/` and
+included in `sitemap.xml`.
+
 ### Adding an announcement
 
 Append a dict to `PENGUMUMAN` in `src/content/__init__.py`:
 
 ```python
-{
-    "id": "ramadan-1448",
-    "text": "Jadual waktu solat Ramadan telah dikemas kini.",
-    "url": "/artikel/cara-menentukan-zon-waktu-solat/",  # optional link
-    "from": "2027-02-01",   # optional, inclusive; None = always active
-    "until": "2027-03-31",  # optional, inclusive
-}
+PENGUMUMAN = [
+    {
+        "id": "ramadan-1448",
+        "text": "Jadual waktu solat Ramadan telah dikemas kini.",
+        "url": "/panduan/ihtiyati/",   # optional link
+        "from": "2027-02-01",          # optional, inclusive; None = no start
+        "until": "2027-03-31",         # optional, inclusive; None = no end
+    },
+]
 ```
 
 `text` is plain text (escaped for you). The banner shows on every zone page
-while today falls inside the `from`/`until` window.
+while today falls inside the `from`/`until` window. **When the list is empty, or
+no item is active, no "Pengumuman" banner is rendered at all.** It ships empty,
+so a fresh deploy shows nothing until you add an item.
 
 ## Local Development
 
@@ -175,9 +197,9 @@ default. Only the top-level `SITE_ORIGIN` affects production.
 ├── src/
 │   ├── entry.py          # Worker entry point (SSR handler, sw.js + manifest)
 │   ├── template.py       # Page template (mirrors index.html markup/CSS/JS)
-│   ├── pages.py          # Article/index/sitemap HTML
+│   ├── pages.py          # Article/guide/index/sitemap HTML
 │   ├── md.py             # Markdown renderer (mistune)
-│   ├── content/          # Editable content: articles + announcements
+│   ├── content/          # Editable content: articles + guides + announcements
 │   ├── prayer.py         # Calculation engine
 │   └── zones.py          # Zone data
 ├── public/               # Static assets served by the worker

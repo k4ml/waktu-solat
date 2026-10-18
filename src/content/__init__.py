@@ -1,4 +1,5 @@
-"""Editable site content: articles (artikel) and announcements (pengumuman).
+"""Editable site content: articles (artikel), guides (panduan) and
+announcements (pengumuman).
 
 Content is plain Python so it is bundled into the Worker automatically — no
 database, no CMS and no build step. Edit a file, commit, and the GitHub
@@ -11,6 +12,10 @@ Adding an article
    (``BODY`` is Markdown).
 3. Import it below and add its ``ARTICLE`` dict to ``ARTIKEL``.
 
+Adding a guide page
+-------------------
+Append a dict to ``PANDUAN`` in ``content/panduan.py``.
+
 Adding an announcement
 ----------------------
 Append a dict to ``PENGUMUMAN``. ``text`` is plain text (escaped for you).
@@ -20,6 +25,7 @@ Append a dict to ``PENGUMUMAN``. ``text`` is plain text (escaped for you).
 from datetime import date, datetime
 
 from content import artikel_cara_menentukan_zon, artikel_mengapa_waktu_berbeza
+from content.panduan import PANDUAN
 
 # ---------------------------------------------------------------------------
 # Articles — shown at /artikel/ and served at /artikel/<slug>/
@@ -30,16 +36,17 @@ ARTIKEL = [
 ]
 
 # ---------------------------------------------------------------------------
-# Announcements — short notices shown as a banner on the prayer-time pages
+# Announcements — short notices shown as a banner on the prayer-time pages.
+# Leave this list empty to show no banner at all.
 # ---------------------------------------------------------------------------
 PENGUMUMAN = [
-    {
-        "id": "contoh-pengumuman",
-        "text": "Ini contoh pengumuman. Edit src/content/__init__.py untuk tukar.",
-        "url": None,
-        "from": None,
-        "until": None,
-    },
+    # {
+    #     "id": "ramadan-1448",
+    #     "text": "Jadual waktu solat Ramadan telah dikemas kini.",
+    #     "url": "/panduan/ihtiyati/",   # optional link
+    #     "from": "2027-02-01",          # optional, inclusive; None = no start
+    #     "until": "2027-03-31",         # optional, inclusive; None = no end
+    # },
 ]
 
 
@@ -64,6 +71,19 @@ def get_article(slug: str):
     for article in ARTIKEL:
         if article["SLUG"] == slug:
             return article
+    return None
+
+
+def all_panduan():
+    """Guide pages in display order."""
+    return sorted(PANDUAN, key=lambda p: p.get("ORDER", 99))
+
+
+def get_panduan(slug: str):
+    """Return the guide page with this slug, or None."""
+    for page in PANDUAN:
+        if page["SLUG"] == slug:
+            return page
     return None
 
 

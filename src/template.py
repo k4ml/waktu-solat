@@ -153,49 +153,11 @@ PAGE = """<!DOCTYPE html>
   .prayer-row:nth-child(5){animation-delay:.20s;}.prayer-row:nth-child(6){animation-delay:.24s;}
   .prayer-row:nth-child(7){animation-delay:.28s;}
 
-  /* ── Info popup link ── */
-  .info-link{display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);text-decoration:none;cursor:pointer;background:none;border:none;padding:0;opacity:.8;transition:opacity .2s;font-weight:600;}
-  .info-link:hover{opacity:1;}
-  .info-link svg{width:13px;height:13px;stroke:var(--gold);flex-shrink:0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-
-  /* ── Modal overlay ── */
-  .modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
-  .modal-overlay.open{opacity:1;pointer-events:all;}
-  .modal-box{background:var(--deep);border:1px solid var(--border);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;transform:translateY(40px);transition:transform .35s cubic-bezier(.32,1,.28,1);padding-bottom:env(safe-area-inset-bottom,20px);}
-  .modal-overlay.open .modal-box{transform:translateY(0);}
-  .modal-handle{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin:12px auto 0;}
-  .modal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--deep);z-index:1;}
-  .modal-title{font-size:12px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;font-weight:600;}
-  .modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:24px;line-height:1;padding:0 2px;transition:color .2s;}
-  .modal-close:hover{color:var(--text);}
-  .modal-body{padding:20px 20px 32px;display:flex;flex-direction:column;gap:22px;}
-
-  .psec-title{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px;font-weight:600;}
-  .psec-title::after{content:'';flex:1;height:1px;background:var(--border);}
-  .psec p{font-size:14px;color:var(--text-dim);line-height:1.78;margin-bottom:8px;}
-  .psec p:last-child{margin-bottom:0;}
-  .psec b{color:var(--text);font-weight:600;}
-  .psec a{color:var(--teal-light);text-decoration:none;}
-  .psec a:hover{text-decoration:underline;}
-  .psec ul{padding-left:18px;margin-top:6px;}
-  .psec ul li{font-size:14px;color:var(--text-dim);line-height:1.75;margin-bottom:4px;}
-  .psec ul li b{color:var(--text);}
-
-  .iht-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
-  .iht-table th{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;}
-  .iht-table td{padding:7px 10px;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;}
-  .iht-table .td-iht{text-align:right;color:var(--gold);font-size:12px;white-space:nowrap;font-weight:600;}
-  .iht-table tr:last-child td{border-bottom:none;}
-
-  .formula-box{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text-dim);line-height:1.85;}
-  .formula-box code{font-family:monospace;font-size:11.5px;background:rgba(201,168,76,.1);color:var(--gold-light);padding:1px 5px;border-radius:3px;}
-
-  .warn-banner{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;}
-  .warn-icon{font-size:20px;flex-shrink:0;}
-  .warn-text{font-size:13.5px;color:var(--text-dim);line-height:1.72;}
-  .warn-text b{color:var(--gold-light);}
-  .warn-text a{color:var(--teal-light);text-decoration:none;}
-  .warn-text a:hover{text-decoration:underline;}
+  /* ── Top menu: Artikel | Panduan ── */
+  .mainmenu{display:flex;gap:8px;justify-content:center;align-items:center;margin:0 0 14px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
+  .mainmenu a{color:var(--gold);text-decoration:none;opacity:.7;border:1px solid transparent;border-radius:999px;padding:7px 15px;transition:opacity .2s,border-color .2s,background .2s;}
+  .mainmenu a:hover{opacity:1;}
+  .mainmenu a.active{opacity:1;border-color:var(--border);background:var(--gold-dim);}
 
   .offline-chip{display:none;margin:0 auto 12px;width:max-content;max-width:100%;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-light);border:1px solid rgba(201,168,76,.24);background:rgba(201,168,76,.08);border-radius:999px;padding:7px 10px;font-weight:600;}
   .offline-chip.show{display:block;}
@@ -213,6 +175,11 @@ PAGE = """<!DOCTYPE html>
     <div class="latin-title">Waktu Solat Malaysia</div>
     <div class="hline"></div>
   </header>
+
+  <nav class="mainmenu" aria-label="Menu utama">
+    <a href="/artikel/">Artikel</a>
+    <a href="/panduan/">Panduan</a>
+  </nav>
 
   <div class="status-card" id="installCard">
     <div class="status-top">
@@ -285,13 +252,7 @@ PAGE = """<!DOCTYPE html>
     <p>Kaedah <span>JAKIM</span> · Anugraha "Mekanika Benda Langit" · MKI Ke-116 (2019)</p>
     <p>Subuh 18°+2′ · Zohor +2′ · Asar +3′ · Maghrib +1′ · Isyak +2′</p>
     <p style="margin-top:8px;opacity:.8;">Oleh <a href="https://kamal.koditi.my/" target="_blank" style="color:var(--gold);text-decoration:none;">kamal.koditi.my</a> · Maklum balas: <a href="https://x.com/k4ml" target="_blank" style="color:var(--gold);text-decoration:none;">@k4ml</a></p>
-    <p style="margin-top:10px;"><a href="/artikel/" style="color:var(--gold);text-decoration:none;">Artikel &amp; Panduan</a></p>
-    <p style="margin-top:12px;">
-      <button class="info-link" onclick="openModal()">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Peringatan &amp; Kaedah Pengiraan
-      </button>
-    </p>
+    <p style="margin-top:10px;"><a href="/panduan/" style="color:var(--gold);text-decoration:none;">Peringatan &amp; Kaedah Pengiraan</a></p>
   </footer>
 </div>
 
@@ -453,136 +414,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function () {});
   });
 }
-</script>
-
-<!-- ════════════════ INFO MODAL ════════════════ -->
-<div class="modal-overlay" id="infoModal" onclick="handleOverlayClick(event)">
-  <div class="modal-box">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <span class="modal-title">Peringatan &amp; Kaedah Pengiraan</span>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
-    <div class="modal-body">
-
-      <!-- PENAFIAN -->
-      <div class="psec">
-        <div class="psec-title">⚠ Penafian Penting</div>
-        <div class="warn-banner">
-          <div class="warn-icon">📋</div>
-          <div class="warn-text">
-            <b>Aplikasi ini adalah untuk panduan umum sahaja.</b> Waktu solat yang dipaparkan mungkin berbeza satu hingga dua minit daripada waktu rasmi yang diterbitkan oleh pihak berkuasa. Untuk waktu yang lebih tepat dan sah secara rasmi, sila rujuk:
-            <ul style="margin-top:6px;padding-left:16px;">
-              <li><a href="https://www.e-solat.gov.my" target="_blank">e-Solat JAKIM</a> — www.e-solat.gov.my</li>
-              <li>Majlis Agama Islam negeri masing-masing</li>
-              <li>Taqwim Solat yang diterbitkan setiap tahun</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- KONSEP ZON & TITIK RUJUKAN -->
-      <div class="psec">
-        <div class="psec-title">🗺 Zon Waktu &amp; Titik Rujukan JAKIM</div>
-        <p>Malaysia dibahagikan kepada <b>lebih 40 zon waktu solat</b> oleh JAKIM. Setiap zon merangkumi beberapa daerah yang berbeza jarak dari garisan bujur.</p>
-        <p>Prinsip utama: JAKIM menggunakan <b>titik paling barat dalam setiap zon</b> sebagai titik rujukan. Ini kerana titik barat menerima cahaya fajar paling lewat dan matahari terbenam paling awal — bermakna waktu Subuh paling lewat dan waktu Maghrib paling awal bagi seluruh zon. Ini memastikan seluruh penduduk zon tersebut <b>selamat untuk berimsak</b> secara serentak.</p>
-        <p>Sebab itulah aplikasi ini memaparkan <b>dua lajur</b>:</p>
-        <ul>
-          <li><b style="color:var(--gold-light);">Barat (◀)</b> — waktu rasmi zon, berdasarkan sempadan barat. Ini yang JAKIM gunakan.</li>
-          <li><b style="color:var(--teal-light);">Timur (▶)</b> — waktu di sempadan timur zon. Subuh lebih awal, Maghrib lebih lewat berbanding kolum Barat.</li>
-        </ul>
-        <p>Perbezaan boleh mencecah <b>5–15 minit</b> bagi zon yang luas seperti di Sabah, Sarawak dan Pahang dalaman.</p>
-      </div>
-
-      <!-- IHTIYATI -->
-      <div class="psec">
-        <div class="psec-title">⏱ Ihtiyati — Margin Berjaga-jaga</div>
-        <p><b>Ihtiyati</b> (الاحتياط) bermaksud langkah berjaga-jaga. Dalam pengiraan waktu solat, nilai astronomik tulen ditambah sedikit minit tambahan sebelum dibulatkan ke minit penuh. Tujuannya untuk memastikan setiap waktu sudah pasti masuk sebelum diisytiharkan.</p>
-        <table class="iht-table">
-          <tr><th>Waktu Solat</th><th>Kaedah</th><th>Sebab</th><th class="td-iht">Ihtiyati</th></tr>
-          <tr><td><b>Imsak</b></td><td>Subuh − 10 min</td><td>Sempadan akhir makan sahur</td><td class="td-iht">−10 min</td></tr>
-          <tr><td><b>Subuh</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Sudut 18° sudah lebih konservatif; ihtiyati kecil mencukupi</td><td class="td-iht">+2 min</td></tr>
-          <tr><td><b>Syuruk</b></td><td>raw, bulatkan ke bawah</td><td>Tamat waktu solat Subuh</td><td class="td-iht">+0 min</td></tr>
-          <tr><td><b>Zohor</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Pastikan matahari sudah jelas condong</td><td class="td-iht">+2 min</td></tr>
-          <tr><td><b>Asar</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Sempadan bayang-bayang lebih selamat</td><td class="td-iht">+3 min</td></tr>
-          <tr><td><b>Maghrib</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Pastikan matahari sudah terbenam penuh</td><td class="td-iht">+1 min</td></tr>
-          <tr><td><b>Isyak</b></td><td>raw + ihtiyati, bulatkan ke bawah</td><td>Syafaq benar-benar hilang</td><td class="td-iht">+2 min</td></tr>
-        </table>
-        <p style="margin-top:10px;">Nilai ihtiyati ini disahkan melalui perbandingan dengan data JAKIM untuk zon JHR02 dan WLY01 pada 18 Mac 2026, menggunakan sudut Subuh <b>18°</b> yang berkuat kuasa sejak 2019 berikutan keputusan MKI Ke-116.</p>
-      </div>
-
-      <!-- KAEDAH PENGIRAAN -->
-      <div class="psec">
-        <div class="psec-title">📐 Kaedah Pengiraan Astronomik</div>
-        <p>Aplikasi ini menggunakan formula dari buku <b>Rinto Anugraha — "Mekanika Benda Langit"</b> (Universiti Gadjah Mada, Indonesia), yang menjadi rujukan utama pengiraan waktu solat di Malaysia dan Indonesia.</p>
-        <p>Langkah-langkah pengiraan:</p>
-        <ul>
-          <li><b>Julian Day (JD)</b> — tarikh ditukar kepada nombor Julian untuk memudahkan pengiraan astronomi.</li>
-          <li><b>Deklinasi Matahari (δ)</b> — sudut antara garisan khatulistiwa Bumi dan kedudukan matahari. Berubah sepanjang tahun (±23.4°). Formula siri trigonometri tiga sebutan digunakan.</li>
-          <li><b>Persamaan Masa (ET)</b> — perbezaan antara waktu matahari sebenar dan jam biasa, disebabkan orbit Bumi berbentuk elips dan paksi condong. Boleh ±16 minit. Formula tujuh sebutan digunakan.</li>
-          <li><b>Waktu Transit (Zohor)</b> — matahari di puncak meridian tempatan: <code>TT = 12 + zon_masa − (bujur÷15) − (ET÷60)</code></li>
-          <li><b>Sudut Waktu (Hour Angle)</b> — sudut matahari dari meridian pada ketinggian tertentu, dikira dengan formula: <code>cos H = (sin alt − sin lat · sin δ) / (cos lat · cos δ)</code></li>
-        </ul>
-        <div class="formula-box" style="margin-top:10px;">
-          <b style="color:var(--text);">Ketinggian matahari yang digunakan:</b><br>
-          Subuh / Fajr &nbsp;&nbsp;→ <code>−18°</code> (di bawah ufuk) — <b style="color:var(--gold-light)">keputusan MKI Ke-116, Nov 2019</b><br>
-          Syuruk / Maghrib → <code>−0.833° − 0.0347√h</code> (h = ketinggian tempat, meter)<br>
-          Asar (Syafii) &nbsp;→ <code>arctan(1 / (1 + tan|lat−δ|))</code><br>
-          Isyak &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <code>−18°</code> (di bawah ufuk) — standard JAKIM
-        </div>
-        <p style="margin-top:10px;">Fajr/Isyak menggunakan ketinggian negatif kerana matahari masih di bawah ufuk. Kedua-duanya ialah <b>sudut senja astronomi</b> yang menentukan gelap-terang langit. Sudut Subuh 18° adalah <b>lebih lewat</b> daripada 20° (lebih cerah, lebih selamat untuk imsak), menghasilkan waktu Subuh ~8 minit lebih lewat.</p>
-      </div>
-
-      <!-- PERKARA TEKNIKAL LAIN -->
-      <div class="psec">
-        <div class="psec-title">🔍 Isu &amp; Penemuan Teknikal</div>
-        <p>Semasa membangunkan aplikasi ini, beberapa isu menarik ditemui:</p>
-        <ul>
-          <li><b>Ralat formula asal:</b> Formula deklinasi Anugraha menggunakan T dalam radian, di mana argumen <code>sinD(57.297 × T)</code> menukar radian ke darjah secara tersirat. Menggunakan T dalam darjah secara salah menghasilkan Subuh 12–15 minit terlalu awal.</li>
-          <li><b>Sudut Subuh 18°, bukan 20°:</b> Pada November 2019, Muzakarah MKI Ke-116 memutuskan sudut Subuh Malaysia bertukar dari 20° kepada <b>18°</b> berikutan kajian setahun oleh JAKIM, UM, UniSZA dan UiTM. Perubahan ini menambah ~8 minit kepada waktu Subuh. Perbezaan tepat 8 minit antara dua sudut ini mengesahkan penemuan tersebut secara matematik. Rujukan: <a href="https://muftiwp.gov.my/ms/artikel/bayan-linnas/3858-" target="_blank">Bayan Linnas Khas, Jabatan Mufti WP (6 Dis 2019)</a>.</li>
-          <li><b>Ihtiyati Subuh hanya +2 minit:</b> Dengan sudut 18° yang sudah lebih selamat/lewat, ihtiyati yang diperlukan hanyalah 2 minit (bukan 10 minit seperti jika menggunakan 20°). Kesimpulan asal +10 minit adalah gabungan ralat sudut + ihtiyati yang tersalah dikira sebagai ihtiyati semata-mata.</li>
-          <li><b>Koordinat zon bukan titik tengah:</b> Menggunakan koordinat tengah bandar (seperti Johor Bahru) memberi waktu yang berbeza daripada JAKIM. Titik rujukan JAKIM ialah sempadan barat zon, bukan pusat penduduk.</li>
-          <li><b>Asar berbeza mazhab:</b> Mazhab Syafii (digunakan di Malaysia) mengira Asar apabila bayang-bayang sesuatu objek sama panjang dengan objek <i>ditambah</i> bayang-bayang tengah hari. Mazhab Hanafi menggunakan dua kali panjang — ini boleh menjadikan Asar 30–60 minit lebih lewat.</li>
-          <li><b>Pembetulan ketinggian tempat:</b> Kawasan tinggi seperti Cameron Highlands (±1500m) dan Gunung Kinabalu (±3000m) mempunyai Syuruk lebih awal dan Maghrib lebih lewat kerana ufuk efektif lebih rendah. Formula: tambah <code>0.0347√h</code> darjah kepada sudut ufuk.</li>
-        </ul>
-      </div>
-
-      <!-- TARIKH HIJRI -->
-      <div class="psec">
-        <div class="psec-title">🌙 Tarikh Hijri</div>
-        <p>Tarikh Hijri dipaparkan menggunakan <b>algoritma tabular</b> berdasarkan Julian Day, yang menganggap bulan bermula secara tetap 29.5 hari. Kaedah ini boleh berbeza <b>1–2 hari</b> daripada takwim rukyah (cerapan anak bulan) yang digunakan secara rasmi di Malaysia.</p>
-        <p>Untuk tarikh Hijri rasmi Malaysia, sila rujuk <a href="https://www.islam.gov.my" target="_blank">JAKIM</a> atau Majlis Agama negeri.</p>
-      </div>
-
-
-      <!-- SKRIP PEMBANGUNAN -->
-      <div class="psec">
-        <div class="psec-title">🔧 Skrip Pembangunan (Dev Tools)</div>
-        <p>Semasa membangunkan aplikasi ini, beberapa skrip interaktif digunakan untuk mengesahkan pengiraan berbanding data JAKIM. Skrip-skrip ini tersedia dalam fail berasingan sebagai rujukan pembelajaran:</p>
-        <ul>
-          <li><b>Tab 1 — Perbandingan JAKIM:</b> Masukkan waktu JAKIM untuk mana-mana zon dan tarikh, bandingkan dengan hasil pengiraan tempatan secara langsung.</li>
-          <li><b>Tab 2 — Probe Koordinat:</b> Imbas julat latitud/longitud untuk mencari titik yang menghasilkan waktu sasaran — cara kami mengesahkan titik rujukan barat setiap zon.</li>
-          <li><b>Tab 3 — Probe Ihtiyati:</b> Cari kombinasi ihtiyati yang paling hampir dengan data JAKIM secara automatik — cara nilai +10m Subuh, +2m Zohor dll ditemui.</li>
-          <li><b>Tab 4 — Fetch JAKIM API:</b> Ambil data langsung dari API e-Solat JAKIM untuk dijadikan rujukan. Termasuk skrip Node.js untuk elak sekatan CORS.</li>
-          <li><b>Tab 5 — Kod Sumber:</b> Semua skrip Node.js asal yang dijalankan dalam terminal semasa sesi pembangunan, dengan ulasan terperinci.</li>
-        </ul>
-        <p style="margin-top:10px;">
-          <a href="/dev-tools" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(42,122,114,.15);border:1px solid rgba(42,122,114,.35);border-radius:6px;padding:8px 14px;color:var(--teal-light);text-decoration:none;font-size:13px;font-weight:600;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            Buka Dev Tools
-          </a>
-        </p>
-      </div>
-
-    </div><!-- /modal-body -->
-  </div><!-- /modal-box -->
-</div><!-- /modal-overlay -->
-
-<script>
-function openModal(){ document.getElementById('infoModal').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(){ document.getElementById('infoModal').classList.remove('open'); document.body.style.overflow=''; }
-function handleOverlayClick(e){ if(e.target===document.getElementById('infoModal')) closeModal(); }
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
 </script>
 
 </body>

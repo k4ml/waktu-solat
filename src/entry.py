@@ -10,8 +10,15 @@ from workers import Response, WorkerEntrypoint
 from prayer import calc_times, fmt_min, diff_str, to_hijri, MYT
 from template import render as render_template
 from zones import ZONES, get_zone_by_code, get_all_zones_flat
-from content import active_announcements, all_articles, get_article
-from pages import notice_banner, render_article, render_index, render_sitemap
+from content import all_articles, all_panduan
+from pages import (
+    notice_banner,
+    render_article,
+    render_index,
+    render_panduan,
+    render_panduan_index,
+    render_sitemap,
+)
 
 # Default zone - the original PWA opens on Johor (JHR02).
 DEFAULT_ZONE = "JHR02"
@@ -135,6 +142,16 @@ class Default(WorkerEntrypoint):
         if path.startswith("/artikel/"):
             slug = path.strip("/").split("/")[-1]
             html = render_article(slug, site_origin)
+            if html is None:
+                return Response("Not Found", status=404)
+            return self.serve_content_page(html)
+
+        # Guide pages: /panduan/ and /panduan/<slug>/
+        if path == "/panduan":
+            return self.serve_content_page(render_panduan_index(site_origin))
+        if path.startswith("/panduan/"):
+            slug = path.strip("/").split("/")[-1]
+            html = render_panduan(slug, site_origin)
             if html is None:
                 return Response("Not Found", status=404)
             return self.serve_content_page(html)
@@ -647,6 +664,9 @@ self.addEventListener('fetch', event => {
             urls.append(
                 (f"{site_origin}/artikel/{article['SLUG']}/", str(article["DATE"]))
             )
+        urls.append((f"{site_origin}/panduan/", None))
+        for page in all_panduan():
+            urls.append((f"{site_origin}/panduan/{page['SLUG']}/", None))
         return Response(
             render_sitemap(urls),
             headers={

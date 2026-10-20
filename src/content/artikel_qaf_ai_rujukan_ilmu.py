@@ -18,7 +18,7 @@ sunat, zikir selepas solat, atau adab-adab kecil dalam kehidupan — tetapi jara
 sempat meneliti dalil khusus di sebaliknya. Kita tahu ia diamalkan, tetapi tidak
 berapa tahu daripada mana ia datang.
 
-Akhir-akhir ini saya banyak menggunakan [Qaf.ai](https://qaf.ai) sebagai tempat
+Akhir-akhir ini saya banyak menggunakan [Qaf.ai](https://qaf.ai/i/WEBMUU) sebagai tempat
 mula untuk mencari dalil. Ia satu pembantu AI untuk rujukan ilmu agama: kita
 tanya dalam bahasa biasa, dan ia menjawab dengan **disertakan rujukan** — ayat
 al-Quran, tafsir, hadis, dan sumber-sumber lain yang boleh diperiksa sendiri.
@@ -117,7 +117,7 @@ disiplin ilmu agama, bukan sekadar teknologi semata-mata.
 
 ## Di mana mendapatkannya
 
-- Laman web: [qaf.ai](https://qaf.ai)
+- Laman web: [qaf.ai](https://qaf.ai/i/WEBMUU)
 - Tentang pembangun: [qaf.ai/about](https://qaf.ai/about)
 - iPhone / iPad: [App Store](https://apps.apple.com/us/app/qaf-islamic-ai/id6767689775)
 - Android: [Google Play](https://play.google.com/store/apps/details?id=app.qaf.ai)

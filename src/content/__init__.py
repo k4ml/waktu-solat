@@ -26,6 +26,7 @@ from datetime import date, datetime
 
 from content import (
     artikel_cara_menentukan_zon,
+    artikel_keseimbangan_pemakanan,
     artikel_mengapa_waktu_berbeza,
     artikel_qaf_ai_rujukan_ilmu,
 )
@@ -36,6 +37,7 @@ from content.panduan import PANDUAN
 # ---------------------------------------------------------------------------
 ARTIKEL = [
     artikel_cara_menentukan_zon.ARTICLE,
+    artikel_keseimbangan_pemakanan.ARTICLE,
     artikel_mengapa_waktu_berbeza.ARTICLE,
     artikel_qaf_ai_rujukan_ilmu.ARTICLE,
 ]

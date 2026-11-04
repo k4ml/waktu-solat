@@ -506,6 +506,15 @@ class Default(WorkerEntrypoint):
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Waktu Solat Malaysia - Pilih Zon</title>
   <meta name="description" content="Waktu solat untuk semua zon di Malaysia.">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4EM4VJY5X6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+
+    gtag('config', 'G-4EM4VJY5X6');
+  </script>
   <style>
     :root {{ --ink:#0d1117; --deep:#111820; --gold:#c9a84c; --text:#e8e0d0; --text-dim:rgba(232,224,208,0.55); --border:rgba(180,145,80,0.2); }}
     body {{ font-family: 'Segoe UI', sans-serif; background: var(--ink); color: var(--text); padding: 1rem; }}

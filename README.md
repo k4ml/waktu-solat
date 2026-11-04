@@ -42,6 +42,7 @@ while maintaining offline PWA support via service worker.
 | `/artikel/<slug>/` | Article page, e.g. `/artikel/cara-menentukan-zon-waktu-solat/` |
 | `/panduan/` | Guide index (Peringatan & Kaedah Pengiraan) |
 | `/panduan/<slug>/` | Guide page, e.g. `/panduan/ihtiyati/` |
+| `/kiblat/` | Pencari arah kiblat (Qibla direction finder) |
 | `/sitemap.xml` | Sitemap (root, zone pages, articles and guides) |
 | `/robots.txt` | Robots file pointing at the sitemap |
 | `/sw.js` | Service worker |

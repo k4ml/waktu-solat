@@ -218,4 +218,220 @@ mengesahkan pengiraan berbanding data JAKIM:
 [Buka Dev Tools](/dev-tools)
 """,
     },
+    {
+        "SLUG": "nota-pembangunan-kiblat",
+        "ORDER": 8,
+        "TITLE": "Nota Pembangunan — Pencari Arah Kiblat",
+        "DESCRIPTION": (
+            "Nota teknikal pelaksanaan pencari arah kiblat: formula bearing "
+            "bulatan besar, geolokasi, kompas peranti dan perangkap iOS/Android."
+        ),
+        "BODY": """
+Halaman [Pencari Arah Kiblat](/kiblat/) berbeza daripada kalkulator waktu solat:
+ia **tidak memerlukan rangkaian sama sekali** selepas dimuatkan. Arah kiblat
+ialah fungsi tulen bagi koordinat pengguna, jadi keseluruhan pengiraan berlaku
+dalam pelayar. Nota ini merekodkan cara ia dibina, keputusan reka bentuk, dan
+perangkap yang ditemui semasa menguji pada iOS dan Android.
+
+## 1. Bearing Kiblat — Formula Bulatan Besar
+
+Kiblat ialah arah **bearing awal** (*initial bearing*) dari satu titik di
+permukaan sfera ke Kaabah (21.4225°N, 39.8262°E). Ia dikira dengan formula
+bearing bulatan besar:
+
+```
+θ = atan2( sin Δλ · cos φ₂ ,
+           cos φ₁ · sin φ₂ − sin φ₁ · cos φ₂ · cos Δλ )
+```
+
+di mana `φ₁, λ₁` ialah latitud/longitud pengguna, `φ₂, λ₂` koordinat Kaabah, dan
+`Δλ = λ₂ − λ₁`. Hasil `atan2` berada dalam julat −π…π, jadi ia perlu dinormalkan
+ke 0–360°.
+
+Pelaksanaan sebenar (JavaScript dalam halaman, dan salinan Python dalam
+`src/kiblat.py` untuk semakan):
+
+```js
+function qiblaBearing(lat, lng) {
+  const kaabaLat = 21.4225 * Math.PI / 180;
+  const kaabaLng = 39.8262 * Math.PI / 180;
+  lat *= Math.PI / 180; lng *= Math.PI / 180;
+  const dLng = kaabaLng - lng;
+  const y = Math.sin(dLng) * Math.cos(kaabaLat);
+  const x = Math.cos(lat) * Math.sin(kaabaLat)
+          - Math.sin(lat) * Math.cos(kaabaLat) * Math.cos(dLng);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+```
+
+**Perhatian:** ini bearing *permulaan*, bukan bearing sepanjang laluan rhumb.
+Untuk jarak sejauh Malaysia–Makkah (6,000–7,000 km) perbezaannya kecil, tetapi
+istilah yang betul tetap penting jika kod ini digunakan semula untuk jarak jauh
+atau untuk laluan yang melintasi kutub.
+
+### Bukan "arah matahari terbenam"
+
+Ramai menganggap kiblat dari Malaysia ialah "arah barat". Ia sebenarnya
+**barat-barat laut (WNW)**. Bearing 292.5° bermaksud 22.5° ke utara dari barat
+tulen. Menghadap tepat ke barat (270°) akan tersasar lebih 20° — cukup untuk
+membawa saf jauh dari arah Kaabah pada jarak beberapa meter.
+
+Nilai rujukan yang disahkan dengan fungsi di atas:
+
+| Lokasi | Latitud | Longitud | Bearing kiblat |
+|--------|---------|----------|----------------|
+| Kuala Lumpur | 3.1390 | 101.6869 | 292.5° |
+| Johor Bahru | 1.4927 | 103.7414 | 293.0° |
+| George Town | 5.4141 | 100.3288 | 291.6° |
+| Ipoh | 4.5975 | 101.0901 | 291.9° |
+| Kuantan | 3.8077 | 103.3260 | 292.0° |
+| Kota Kinabalu | 5.9804 | 116.0735 | 290.6° |
+| Kuching | 1.5533 | 110.3592 | 292.1° |
+| Kota Bharu | 6.1254 | 102.2381 | 291.0° |
+
+## 2. Geolokasi
+
+Lokasi diambil melalui `navigator.geolocation.getCurrentPosition()` dengan
+`enableHighAccuracy: true`, `timeout: 10000`, dan `maximumAge: 600000` (10
+minit). Pilihan `maximumAge` membenarkan kedudukan terakhir yang masih segar
+dipulangkan serta-merta, mengurangkan masa menunggu.
+
+Kod ralat dipetakan kepada mesej yang boleh difahami:
+
+| `err.code` | Maksud | Tindakan dalam UI |
+|------------|--------|-------------------|
+| 1 | Kebenaran ditolak | Minta benarkan akses atau guna koordinat manual |
+| 2 | Kedudukan tidak tersedia | Cadang masukkan koordinat |
+| 3 | Masa tamat | Cadang cuba semula |
+
+**Cache luar talian:** lokasi terakhir yang sah disimpan dalam `localStorage`
+(kunci `kiblat:location`) supaya arah kiblat masih boleh dipaparkan tanpa
+rangkaian pada lawatan seterusnya. Lokasi contoh Kuala Lumpur **tidak** disimpan
+— jika tidak, UI akan mendakwa pengguna berada di KL sedangkan itu hanya nilai
+lalai.
+
+**Fallback tanpa GPS:** pemilih bandar (8 bandar Malaysia) dan medan latitud /
+longitud manual. Ini penting untuk desktop, di mana pengguna sering menolak
+permintaan lokasi.
+
+**Privasi:** koordinat tidak pernah dihantar ke pelayan. Ia hanya digunakan
+dalam fungsi `qiblaBearing()` pada peranti.
+
+## 3. Kompas Peranti
+
+Ini bahagian yang paling banyak perangkapnya kerana setiap pelayar mendedahkan
+data yang berbeza.
+
+### iOS Safari
+
+- Gunakan `DeviceOrientationEvent.webkitCompassHeading` — nilai 0–360° mengikut
+  arah jam dari utara, sudah dikompensasi untuk orientasi peranti.
+- `DeviceOrientationEvent.requestPermission()` **wajib** dipanggil dari gerak
+  isyarat pengguna (ketikan butang). Ia tidak boleh dipanggil secara automatik
+  semasa muat halaman.
+- `webkitCompassAccuracy` memberi ketepatan dalam darjah; nilai negatif bermaksud
+  tidak sah. Jika melebihi 15°, UI memaparkan gesaan kalibrasi angka 8.
+
+### Android Chrome
+
+- Utamakan peristiwa `deviceorientationabsolute`, yang membawa `absolute: true`
+  dan `alpha` relatif kepada utara sebenar.
+- `alpha` adalah **lawan arah jam** dari utara, manakala heading kompas adalah
+  mengikut arah jam: `heading = 360 − alpha`.
+- Nilai `alpha` adalah relatif kepada rangka peranti, bukan skrin. Apabila skrin
+  berputar (landskap), offset orientasi skrin perlu ditambah:
+
+```js
+const screenAngle = screen.orientation
+  ? screen.orientation.angle
+  : (window.orientation || 0);
+
+heading = ((360 - alpha) + screenAngle + 360) % 360;
+```
+
+- Jika hanya `deviceorientation` tersedia (bukan mutlak), bacaan itu relatif dan
+  boleh terpesong. Halaman ini tetap menerimanya sebagai sandaran, tetapi
+  `deviceorientationabsolute` sentiasa diutamakan kerana ia didaftarkan dahulu.
+
+### Memutar carta, bukan jarum
+
+Dua cara untuk memaparkan kompas:
+
+1. Kekalkan carta (N/E/S/W) pegun dan putar jarum kiblat mengikut
+   `bearing − heading`.
+2. Putar **seluruh carta** mengikut `−heading`, dan letakkan jarum kiblat pada
+   `bearing` dalam ruang carta.
+
+Halaman ini menggunakan pendekatan kedua. Kelebihannya: label N/E/S/W sentiasa
+menghadap utara sebenar, jadi pengguna boleh membaca arah cardinal secara
+terus, dan jarum kiblat hanya perlu dikemas kini apabila bearing berubah.
+Penanda `▲` di bahagian atas skrin menunjukkan arah bahagian atas peranti;
+apabila jarum KIBLAT bertemu `▲`, pengguna sedang menghadap kiblat.
+
+## 4. Perangkap yang Ditemui
+
+- **`alpha` relatif vs mutlak.** Tanpa `deviceorientationabsolute`, bacaan
+  Android bergantung pada orientasi awal dan boleh tersasar berpuluh darjah.
+  Sentiasa utamakan peristiwa mutlak.
+- **Kebenaran iOS.** Kedua-dua geolokasi dan orientasi memerlukan HTTPS (atau
+  `localhost`) dan gerak isyarat pengguna. Tiada cara untuk bertanya secara
+  senyap semasa muat halaman.
+- **Magnetometer dalam bangunan.** Bacaan kompas sangat lemah berhampiran logam
+  dan struktur bangunan. Gesaan kalibrasi angka 8 dipaparkan berdasarkan
+  `webkitCompassAccuracy`, tetapi ketidaktepatan Android tidak didedahkan secara
+  langsung — sebab itu UI mengesyorkan kalibrasi secara manual.
+- **Tiada sensor.** Sesetengah desktop dan peranti lama tiada API orientasi.
+  Selepas 1.5 saat tanpa peristiwa, UI beralih kepada mod statik: carta
+  berorientasikan utara dengan bacaan darjah, dan arahan "putar sehingga N
+  menghadap utara sebenar".
+- **Deklinasi magnetik.** Kompas mengukur utara magnetik, bukan utara sebenar.
+  Di Malaysia perbezaannya kecil (±0°–1°), jadi ia diabaikan. Di latitud tinggi
+  ia tidak boleh diabaikan.
+- **Konteks selamat.** Membuka halaman melalui `http://` daripada peranti lain
+  dalam LAN akan menyekat kedua-dua API. `localhost` dikecualikan.
+
+## 5. Struktur Fail
+
+| Fail | Peranan |
+|------|---------|
+| `src/kiblat.py` | Halaman penuh (`PAGE`), `qibla_bearing()` Python, `CITY_PRESETS`, `render_kiblat()` |
+| `src/entry.py` | Laluan `if path == "/kiblat"` dan kaedah `serve_kiblat()`; entri `sitemap.xml` |
+| `src/template.py` | Pautan menu `Kiblat` pada halaman waktu solat |
+| `src/pages.py` | Pautan menu `Kiblat` pada halaman kandungan (`_main_menu`) |
+| `README.md` | Baris `/kiblat/` dalam jadual struktur URL |
+
+Halaman menggunakan penanda templat tersendiri (bukan `str.format`) supaya
+JavaScript dalaman boleh mengekalkan kurungan kurawal tanpa perlu di-escape —
+konvensyen yang sama seperti `src/template.py` dan `src/pages.py`.
+`render_kiblat()` akan meningkatkan ralat jika ada penanda yang tidak diganti,
+supaya salah taip tidak lulus secara senyap.
+
+Bearing dikira dalam dua tempat: JavaScript (paparan langsung) dan Python
+(`qibla_bearing()`). Salinan Python digunakan untuk semakan dan boleh dijalankan
+dari terminal:
+
+```bash
+python3 -c "import sys; sys.path.insert(0,'src'); import kiblat; \\
+print(round(kiblat.qibla_bearing(3.1390, 101.6869), 2))"
+```
+
+Keluaran dijangka `292.54`.
+
+## 6. Pengesahan
+
+Semasa pembangunan, halaman disahkan melalui:
+
+- **Semakan sintaks JS:** skrip dalaman diekstrak dan diuji dengan `node --check`.
+- **Semakan penanda:** `render_kiblat()` dipanggil secara langsung untuk
+  memastikan tiada penanda yang tertinggal.
+- **Semakan laluan:** pelayan pembangunan dijalankan dan `curl` memastikan
+  `/kiblat/` memulangkan 200 serta `/kiblat` mengalih ke `/kiblat/` (301).
+- **Semakan bearing:** nilai bagi 8 bandar dibandingkan secara manual dengan
+  jangkaan geometri (semua dalam julat 290°–293° untuk Malaysia).
+
+Yang **tidak** dapat diuji secara automatik ialah perkakasan: bacaan kompas
+sebenar hanya boleh disahkan pada peranti fizikal. Ujian pada iOS dan Android
+sebenar masih diperlukan sebelum menganggap bahagian kompas itu muktamad.
+""",
+    },
 ]

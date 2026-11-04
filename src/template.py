@@ -187,6 +187,7 @@ PAGE = """<!DOCTYPE html>
   <nav class="mainmenu" aria-label="Menu utama">
     <a href="/artikel/">Artikel</a>
     <a href="/panduan/">Panduan</a>
+    <a href="/kiblat/">Kiblat</a>
   </nav>
 
   <div class="status-card" id="installCard">

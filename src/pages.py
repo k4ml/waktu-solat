@@ -160,11 +160,12 @@ def _sub(template: str, **values) -> str:
 
 
 def _main_menu(active: str = "") -> str:
-    """Top-level menu shown on every content page: Artikel | Panduan."""
+    """Top-level menu shown on every content page: Artikel | Panduan | Kiblat."""
     links = []
     for label, href, key in (
         ("Artikel", "/artikel/", "artikel"),
         ("Panduan", "/panduan/", "panduan"),
+        ("Kiblat", "/kiblat/", "kiblat"),
     ):
         if key == active:
             links.append(f'<a href="{href}" class="active" aria-current="page">{label}</a>')

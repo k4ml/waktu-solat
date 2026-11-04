@@ -12,6 +12,7 @@ from template import render as render_template
 from template import OG_IMAGE_PATH, OG_IMAGE_ALT, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT
 from zones import ZONES, get_zone_by_code, get_all_zones_flat
 from content import all_articles, all_panduan
+from kiblat import render_kiblat
 from pages import (
     notice_banner,
     render_article,
@@ -156,6 +157,10 @@ class Default(WorkerEntrypoint):
             if html is None:
                 return Response("Not Found", status=404)
             return self.serve_content_page(html)
+
+        # Qibla direction finder
+        if path == "/kiblat":
+            return self.serve_kiblat(site_origin)
 
         # Sitemap and robots for crawlers
         if path == "/sitemap.xml":
@@ -643,6 +648,16 @@ self.addEventListener('fetch', event => {
             headers={"Content-Type": "application/manifest+json"},
         )
 
+    def serve_kiblat(self, site_origin: str):
+        """Serve the Qibla direction finder. Static markup; bearing is client-side."""
+        return Response(
+            render_kiblat(site_origin),
+            headers={
+                "Content-Type": "text/html; charset=utf-8",
+                "Cache-Control": "public, max-age=3600",
+            },
+        )
+
     def serve_content_page(self, html: str):
         """Serve an article/index page. Content changes on deploy, not by time."""
         return Response(
@@ -672,6 +687,7 @@ self.addEventListener('fetch', event => {
         urls.append((f"{site_origin}/panduan/", None))
         for page in all_panduan():
             urls.append((f"{site_origin}/panduan/{page['SLUG']}/", None))
+        urls.append((f"{site_origin}/kiblat/", None))
         return Response(
             render_sitemap(urls),
             headers={

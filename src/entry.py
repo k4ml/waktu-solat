@@ -20,6 +20,7 @@ from pages import (
     render_panduan,
     render_panduan_index,
     render_sitemap,
+    render_zone_index,
 )
 
 # Default zone - the original PWA opens on Johor (JHR02).
@@ -63,6 +64,30 @@ def _slugify(text: str) -> str:
     return text.strip("-")
 
 
+# A few zone names read badly as a place name ("Seluruh Negeri Melaka",
+# "Zon Khas (Kawasan Khas)"), so their title, H1, URL slug and /zon/ link use an
+# explicit name instead of the derived one.
+PRIMARY_CITY_OVERRIDES = {
+    "MLK01": "Melaka",
+    "SBH04": "Tawau",
+    "SWK09": "Kawasan Khas Sarawak",
+}
+
+
+def zone_primary(zone_code: str, zone_name: str) -> str:
+    """Place name used in the title, H1, slug and /zon/ link text for a zone.
+
+    The first district of the zone name is what people search for ("waktu solat
+    johor bahru"); the remaining districts stay in the description and the
+    page body.
+    """
+    override = PRIMARY_CITY_OVERRIDES.get(zone_code)
+    if override:
+        return override
+    location = zone_name.split(" - ", 1)[1] if " - " in zone_name else zone_name
+    return location.split(",")[0].split("&")[0].strip()
+
+
 # Map SEO-friendly slugs to JAKIM zone codes (e.g. /zon/johor-bahru/).
 # The reverse map gives each zone's canonical slug; zones without one are
 # served (and canonicalized) at their code URL, /zon/<code>/.
@@ -70,16 +95,23 @@ SLUG_TO_ZONE = {}
 _zone_slugs_seen = set()
 for _state, _zones in ZONES.items():
     for _name, _data in _zones.items():
-        code = _data["zone"]
-        # Primary city = first comma-separated place before " - "
-        location = _name.split(" - ", 1)[-1]
-        primary = location.split(",")[0].strip()
-        slug = _slugify(primary)
+        _code = _data["zone"]
+        _primary = zone_primary(_code, _name)
+        slug = _slugify(_primary)
         if slug in _zone_slugs_seen:
-            slug = _slugify(primary + "-" + _state)
+            slug = _slugify(_primary + "-" + _state)
         _zone_slugs_seen.add(slug)
-        SLUG_TO_ZONE[slug] = code
+        SLUG_TO_ZONE[slug] = _code
 ZONE_TO_SLUG = {code: slug for slug, code in SLUG_TO_ZONE.items()}
+
+# Slugs derived from the old zone names, kept so the URLs that were already in
+# sitemap.xml redirect instead of 404ing.
+LEGACY_ZONE_SLUGS = {
+    "pulau-aur-pulau-pemanggil": "pulau-aur",
+    "seluruh-negeri-melaka": "melaka",
+    "bandar-tawau": "tawau",
+    "zon-khas-(kawasan-khas)": "kawasan-khas-sarawak",
+}
 
 
 def _is_zone_code(text: str) -> bool:
@@ -168,6 +200,10 @@ class Default(WorkerEntrypoint):
         if path == "/robots.txt":
             return self.serve_robots(site_origin)
 
+        # Zone index: every JAKIM zone, grouped by state
+        if path == "/zon":
+            return self.serve_zone_index(site_origin)
+
         # Zone page: /zon/JHR02 or /zon/johor-bahru/ (legacy /zone/... redirects)
         if path.startswith("/zone/"):
             segment = path.strip("/").split("/")[-1]
@@ -179,6 +215,12 @@ class Default(WorkerEntrypoint):
             return Response("", status=301, headers={"Location": f"{base_url}/{target}/"})
         if path.startswith("/zon/"):
             segment = path.strip("/").split("/")[-1]
+            if segment in LEGACY_ZONE_SLUGS:
+                return Response(
+                    "",
+                    status=301,
+                    headers={"Location": f"{base_url}/zon/{LEGACY_ZONE_SLUGS[segment]}/"},
+                )
             code = segment.upper() if _is_zone_code(segment) else SLUG_TO_ZONE.get(segment)
             if code is None or get_zone_by_code(code) is None:
                 return Response("Not Found", status=404)
@@ -402,11 +444,16 @@ class Default(WorkerEntrypoint):
 
         # SEO
         location = zone_name.split(" - ", 1)[1] if " - " in zone_name else zone_name
+        primary = zone_primary(data["zone"], zone_name)
         if is_index:
             # The root page is the app itself, not one zone.
             title = "Waktu Solat Malaysia"
+            heading = "Waktu Solat Malaysia"
+            table_title = "Waktu Solat Hari Ini"
         else:
-            title = f"Waktu Solat {location} - {now.strftime('%Y-%m-%d')}"
+            title = f"Waktu Solat {primary} Hari Ini - Jadual {now.year}"
+            heading = f"Waktu Solat {primary}"
+            table_title = f"Jadual Waktu Solat {primary} Hari Ini"
         description = (
             f"Waktu solat hari ini di {location}, {state}. "
             f"Subuh {west_times['fajr']}, Zohor {west_times['dhuhr']}, "
@@ -423,6 +470,26 @@ class Default(WorkerEntrypoint):
                 canonical = (
                     f"{site_origin}/zon/{ZONE_TO_SLUG.get(zone_code, zone_code)}/"
                 )
+
+        # Breadcrumbs: the root page is the app entry, not a zone, so it carries
+        # none. Zone pages sit under the /zon/ index.
+        breadcrumbs = ""
+        crumbs = []
+        if not is_index:
+            breadcrumbs = (
+                '    <nav class="breadcrumbs" aria-label="Jejak navigasi">'
+                '<a href="/">Utama</a>'
+                '<span class="sep">&rsaquo;</span>'
+                '<a href="/zon/">Zon</a>'
+                '<span class="sep">&rsaquo;</span>'
+                f'<span aria-current="page">{escape(primary)}</span>'
+                "</nav>\n"
+            )
+            crumbs = [
+                {"name": "Utama", "item": f"{site_origin}/"},
+                {"name": "Zon", "item": f"{site_origin}/zon/"},
+                {"name": heading, "item": canonical},
+            ]
 
         json_ld = {
             "@context": "https://schema.org",
@@ -444,9 +511,31 @@ class Default(WorkerEntrypoint):
                 ],
             },
         }
+        if crumbs:
+            # A second top-level object: Google reads BreadcrumbList on its own.
+            json_ld = [
+                json_ld,
+                {
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": i,
+                            "name": crumb["name"],
+                            "item": crumb["item"],
+                        }
+                        for i, crumb in enumerate(crumbs, start=1)
+                    ],
+                },
+            ]
 
         html = render_template(
             title=escape(title),
+            h1=escape(heading),
+            breadcrumbs=breadcrumbs,
+            table_title=escape(table_title),
+            page_notes="" if is_index else self.zone_notes(location, west_times),
             description=escape(meta_description, quote=True),
             canonical=canonical,
             og_image=f"{site_origin}{OG_IMAGE_PATH}",
@@ -487,6 +576,48 @@ class Default(WorkerEntrypoint):
                 "Cache-Control": "public, max-age=300",
             },
         )
+
+    def zone_notes(self, location: str, times: dict) -> str:
+        """Prose under the prayer table.
+
+        Restates the times in words (the table alone gives a crawler very little
+        text) and names the alternate spellings people type instead of the
+        JAKIM ones: zuhur, ashar, isya, suboh.
+        """
+        return (
+            '<div class="sol-notes">'
+            f"<b>Waktu solat {escape(location)} hari ini:</b> "
+            f"Imsak {times['imsak']}, Subuh {times['fajr']}, "
+            f"Syuruk {times['syuruk']}, Zohor {times['dhuhr']}, "
+            f"Asar {times['asr']}, Maghrib {times['maghrib']}, "
+            f"Isyak {times['isyak']}. "
+            "Ejaan lain yang turut digunakan: <b>zuhur</b> bagi Zohor, "
+            "<b>ashar</b> bagi Asar, <b>isya</b> bagi Isyak dan "
+            "<b>suboh</b> bagi Subuh. "
+            'Lihat <a href="/panduan/">kaedah pengiraan</a> untuk cara waktu '
+            "ini dikira."
+            "</div>"
+        )
+
+    def serve_zone_index(self, site_origin: str):
+        """The /zon/ index: every JAKIM zone, grouped by state."""
+        groups = []
+        for state, zones in ZONES.items():
+            items = []
+            for zone_name, data in zones.items():
+                code = data["zone"]
+                location = (
+                    zone_name.split(" - ", 1)[1] if " - " in zone_name else zone_name
+                )
+                items.append(
+                    {
+                        "primary": zone_primary(code, zone_name),
+                        "location": location,
+                        "slug": ZONE_TO_SLUG.get(code, code),
+                    }
+                )
+            groups.append({"state": state, "zones": items})
+        return self.serve_content_page(render_zone_index(groups, site_origin))
 
     def render_zone_selector(self, message: str = ""):
         """Render page showing all available zones."""
@@ -678,8 +809,8 @@ self.addEventListener('fetch', event => {
         )
 
     def serve_sitemap(self, site_origin: str):
-        """List every indexable URL: root, zone pages, article index/articles."""
-        urls = [(f"{site_origin}/", None)]
+        """List every indexable URL: root, zone index, zone pages, articles."""
+        urls = [(f"{site_origin}/", None), (f"{site_origin}/zon/", None)]
         for code in sorted(ZONE_TO_SLUG):
             slug = ZONE_TO_SLUG[code]
             urls.append((f"{site_origin}/zon/{slug}/", None))

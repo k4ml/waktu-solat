@@ -5,6 +5,10 @@ rendered page is pixel-identical to the original PWA. Only the values the
 original computes client-side (prayer rows, dates, countdown, zone info) are
 injected by entry.py.
 
+Unlike index.html, this template also carries the page's SEO structure: the
+zone name as a real <h1>, a heading over the prayer table, breadcrumbs on zone
+pages, and a link to the crawlable /zon/ index.
+
 Placeholders use @@NAME@@ markers rather than str.format/string.Template so the
 embedded JavaScript can keep using template literals without escaping.
 """
@@ -81,6 +85,16 @@ PAGE = """<!DOCTYPE html>
   .arabic-title{font-family:var(--arabic);font-size:clamp(26px,7vw,40px);color:var(--gold);line-height:1.3;display:block;margin-bottom:4px;}
   .latin-title{font-size:clamp(10px,3vw,13px);letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase;font-weight:600;}
   .hline{width:80px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);margin:12px auto 0;}
+
+  .breadcrumbs{text-align:center;font-size:10.5px;letter-spacing:.1em;color:var(--text-muted);margin:0 0 12px;}
+  .breadcrumbs a{color:var(--text-dim);text-decoration:none;}
+  .breadcrumbs a:hover{color:var(--gold-light);}
+  .breadcrumbs .sep{opacity:.4;margin:0 5px;}
+
+  .section-title{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:0 0 6px;padding:0 14px;}
+  .sol-notes{margin-top:10px;padding:0 4px;font-size:11.5px;line-height:1.75;color:var(--text-dim);}
+  .sol-notes a{color:var(--gold);text-decoration:none;}
+  .sol-notes a:hover{text-decoration:underline;}
 
   .status-card{background:linear-gradient(135deg,rgba(42,122,114,.14),rgba(17,24,32,.96));border:1px solid rgba(61,169,159,.24);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
   .status-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
@@ -171,11 +185,15 @@ PAGE = """<!DOCTYPE html>
   .prayer-row:nth-child(5){animation-delay:.20s;}.prayer-row:nth-child(6){animation-delay:.24s;}
   .prayer-row:nth-child(7){animation-delay:.28s;}
 
-  /* ── Top menu: Artikel | Panduan ── */
-  .mainmenu{display:flex;gap:8px;justify-content:center;align-items:center;margin:0 0 14px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
+  /* ── Top menu: Zon | Artikel | Panduan | Kiblat ── */
+  .mainmenu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:0 0 14px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
   .mainmenu a{color:var(--gold);text-decoration:none;opacity:.7;border:1px solid transparent;border-radius:999px;padding:7px 15px;transition:opacity .2s,border-color .2s,background .2s;}
   .mainmenu a:hover{opacity:1;}
   .mainmenu a.active{opacity:1;border-color:var(--border);background:var(--gold-dim);}
+  @media (max-width:400px){
+    .mainmenu{gap:6px;font-size:9.5px;letter-spacing:.1em;}
+    .mainmenu a{padding:6px 10px;}
+  }
 
   .offline-chip{display:none;margin:0 auto 12px;width:max-content;max-width:100%;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-light);border:1px solid rgba(201,168,76,.24);background:rgba(201,168,76,.08);border-radius:999px;padding:7px 10px;font-weight:600;}
   .offline-chip.show{display:block;}
@@ -189,16 +207,18 @@ PAGE = """<!DOCTYPE html>
 <div class="geo"></div>
 <div id="app">
   <header>
-    <span class="arabic-title">وقت الصلاة</span>
-    <div class="latin-title">Waktu Solat Malaysia</div>
+    <span class="arabic-title" aria-hidden="true">وقت الصلاة</span>
+    <h1 class="latin-title">@@H1@@</h1>
     <div class="hline"></div>
   </header>
 
   <nav class="mainmenu" aria-label="Menu utama">
+    <a href="/zon/">Zon</a>
     <a href="/artikel/">Artikel</a>
     <a href="/panduan/">Panduan</a>
     <a href="/kiblat/">Kiblat</a>
   </nav>
+@@BREADCRUMBS@@
 
   <div class="status-card" id="installCard">
     <div class="status-top">
@@ -257,6 +277,7 @@ PAGE = """<!DOCTYPE html>
   </div>
   <div class="ornament">✦ ✦ ✦</div>
 
+  <h2 class="section-title">@@TABLE_TITLE@@</h2>
   <div class="col-headers">
     <div></div>
     <div class="col-hdr lbl">Waktu</div>
@@ -266,12 +287,13 @@ PAGE = """<!DOCTYPE html>
 
   <div class="prayers-grid" id="prayersGrid">
 @@PRAYER_ROWS@@  </div>
+@@PAGE_NOTES@@
 
   <footer>
     <p>Kaedah <span>JAKIM</span> · Anugraha "Mekanika Benda Langit" · MKI Ke-116 (2019)</p>
     <p>Subuh 18°+2′ · Zohor +2′ · Asar +3′ · Maghrib +1′ · Isyak +2′</p>
     <p style="margin-top:8px;opacity:.8;">Oleh <a href="https://kamal.koditi.my/" target="_blank" style="color:var(--gold);text-decoration:none;">kamal.koditi.my</a> · Maklum balas: <a href="https://x.com/k4ml" target="_blank" style="color:var(--gold);text-decoration:none;">@k4ml</a></p>
-    <p style="margin-top:10px;"><a href="/panduan/" style="color:var(--gold);text-decoration:none;">Peringatan &amp; Kaedah Pengiraan</a></p>
+    <p style="margin-top:10px;"><a href="/zon/" style="color:var(--gold);text-decoration:none;">Semua zon waktu solat</a> · <a href="/panduan/" style="color:var(--gold);text-decoration:none;">Peringatan &amp; Kaedah Pengiraan</a></p>
   </footer>
 </div>
 

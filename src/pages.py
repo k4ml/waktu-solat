@@ -89,10 +89,14 @@ _SHELL_HEAD = """<!DOCTYPE html>
   .latin-title{font-size:10px;letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase;font-weight:600;}
   .hline{width:80px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);margin:12px auto 0;}
 
-  nav.mainmenu{display:flex;gap:8px;justify-content:center;align-items:center;margin:16px 0 22px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
+  nav.mainmenu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:16px 0 22px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
   nav.mainmenu a{color:var(--gold);text-decoration:none;opacity:.7;border:1px solid transparent;border-radius:999px;padding:7px 15px;transition:opacity .2s,border-color .2s,background .2s;}
   nav.mainmenu a:hover{opacity:1;}
   nav.mainmenu a.active{opacity:1;border-color:var(--border);background:var(--gold-dim);}
+  @media (max-width:400px){
+    nav.mainmenu{gap:6px;font-size:10px;letter-spacing:.1em;}
+    nav.mainmenu a{padding:6px 10px;}
+  }
 
   .article{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:22px 22px 26px;}
   .article h1{font-size:clamp(20px,5vw,28px);color:var(--gold-light);line-height:1.35;margin-bottom:8px;font-weight:600;}
@@ -141,6 +145,16 @@ _SHELL_HEAD = """<!DOCTYPE html>
   .page-title{font-size:16px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px;}
   .empty{color:var(--text-muted);font-size:14px;font-style:italic;}
 
+  .zone-intro{font-size:14px;color:var(--text-dim);margin-bottom:20px;}
+  .zone-intro a{color:var(--teal-light);text-decoration:none;}
+  .zone-intro a:hover{text-decoration:underline;}
+  .zone-group{margin-bottom:22px;}
+  .zone-group h2{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .zone-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;}
+  .zone-list a{color:var(--text);font-size:14px;text-decoration:none;border-bottom:1px solid rgba(201,168,76,.25);}
+  .zone-list a:hover{color:var(--gold-light);border-color:var(--gold);}
+  .zone-list span{display:block;font-size:11.5px;color:var(--text-muted);line-height:1.5;}
+
   footer{text-align:center;padding:24px 0 0;font-size:11px;color:var(--text-muted);font-style:italic;border-top:1px solid var(--border);margin-top:28px;line-height:1.8;}
   footer a{color:var(--gold);text-decoration:none;}
   footer a:hover{text-decoration:underline;}
@@ -180,9 +194,10 @@ def _sub(template: str, **values) -> str:
 
 
 def _main_menu(active: str = "") -> str:
-    """Top-level menu shown on every content page: Artikel | Panduan | Kiblat."""
+    """Top-level menu shown on every content page: Zon | Artikel | Panduan | Kiblat."""
     links = []
     for label, href, key in (
+        ("Zon", "/zon/", "zon"),
         ("Artikel", "/artikel/", "artikel"),
         ("Panduan", "/panduan/", "panduan"),
         ("Kiblat", "/kiblat/", "kiblat"),
@@ -414,6 +429,69 @@ def render_panduan_index(site_origin: str = "", now=None) -> str:
         json_ld=json_ld,
         body="\n".join(parts),
         active="panduan",
+        og_type="website",
+        og_image=f"{site_origin}{OG_IMAGE_PATH}",
+    )
+
+
+def render_zone_index(groups, site_origin: str = "") -> str:
+    """Render /zon/ — every zone as a crawlable link, grouped by state.
+
+    The app itself navigates zones through a <select>, which no crawler follows.
+    This page is the crawl path: plain <a href> links to all 59 zone pages.
+    """
+    canonical = f"{site_origin}/zon/"
+    total = sum(len(group["zones"]) for group in groups)
+
+    sections = []
+    for group in groups:
+        items = []
+        for zone in group["zones"]:
+            items.append(
+                f'      <li><a href="/zon/{zone["slug"]}/">'
+                f'Waktu solat {escape(zone["primary"])}</a>'
+                f'<span>{escape(zone["location"])}</span></li>'
+            )
+        sections.append(
+            '  <section class="zone-group">\n'
+            f"    <h2>{escape(group['state'])}</h2>\n"
+            '    <ul class="zone-list">\n'
+            + "\n".join(items)
+            + "\n    </ul>\n"
+            "  </section>"
+        )
+
+    intro = (
+        '  <p class="zone-intro">Malaysia dibahagikan kepada '
+        f"{total} zon waktu solat oleh JAKIM. Pilih zon untuk jadual waktu "
+        "solat hari ini, atau baca "
+        '<a href="/panduan/">kaedah pengiraan</a> yang digunakan.</p>'
+    )
+    body = (
+        '  <h1 class="page-title">Zon Waktu Solat Malaysia</h1>\n'
+        f"{intro}\n" + "\n".join(sections)
+    )
+
+    json_ld = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Zon Waktu Solat Malaysia",
+        "inLanguage": "ms",
+        "url": canonical,
+        "numberOfItems": total,
+    }
+    return _shell(
+        title=f"Zon Waktu Solat Malaysia - {total} Zon JAKIM",
+        description=(
+            f"Senarai {total} zon waktu solat JAKIM di seluruh Malaysia, "
+            "mengikut negeri: Johor, Kedah, Kelantan, Melaka, Negeri Sembilan, "
+            "Pahang, Perak, Perlis, Pulau Pinang, Sabah, Sarawak, Selangor, "
+            "Terengganu dan Wilayah Persekutuan."
+        ),
+        canonical=canonical,
+        json_ld=json_ld,
+        body=body,
+        active="zon",
         og_type="website",
         og_image=f"{site_origin}{OG_IMAGE_PATH}",
     )

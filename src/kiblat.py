@@ -132,10 +132,14 @@ PAGE = """<!DOCTYPE html>
   .latin-title{font-size:clamp(10px,3vw,13px);letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase;font-weight:600;}
   .hline{width:80px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);margin:12px auto 0;}
 
-  nav.mainmenu{display:flex;gap:8px;justify-content:center;align-items:center;margin:16px 0 16px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
+  nav.mainmenu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:16px 0 16px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
   nav.mainmenu a{color:var(--gold);text-decoration:none;opacity:.7;border:1px solid transparent;border-radius:999px;padding:7px 15px;transition:opacity .2s,border-color .2s,background .2s;}
   nav.mainmenu a:hover{opacity:1;}
   nav.mainmenu a.active{opacity:1;border-color:var(--border);background:var(--gold-dim);}
+  @media (max-width:400px){
+    nav.mainmenu{gap:6px;font-size:9.5px;letter-spacing:.1em;}
+    nav.mainmenu a{padding:6px 10px;}
+  }
 
   .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;}
   .card-label{display:block;font-size:10px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:8px;}
@@ -221,12 +225,13 @@ PAGE = """<!DOCTYPE html>
 <div class="geo"></div>
 <div id="app">
   <header>
-    <span class="arabic-title">اتجاه القبلة</span>
-    <div class="latin-title">Pencari Arah Kiblat</div>
+    <span class="arabic-title" aria-hidden="true">اتجاه القبلة</span>
+    <h1 class="latin-title">Pencari Arah Kiblat</h1>
     <div class="hline"></div>
   </header>
 
   <nav class="mainmenu" aria-label="Menu utama">
+    <a href="/zon/">Zon</a>
     <a href="/artikel/">Artikel</a>
     <a href="/panduan/">Panduan</a>
     <a href="/kiblat/" class="active" aria-current="page">Kiblat</a>

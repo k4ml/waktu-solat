@@ -154,6 +154,34 @@ _SHELL_HEAD = """<!DOCTYPE html>
   .zone-list a{color:var(--text);font-size:14px;text-decoration:none;border-bottom:1px solid rgba(201,168,76,.25);}
   .zone-list a:hover{color:var(--gold-light);border-color:var(--gold);}
   .zone-list span{display:block;font-size:11.5px;color:var(--text-muted);line-height:1.5;}
+  .zone-group h2 a{color:inherit;text-decoration:none;}
+  .zone-group h2 a:hover{color:var(--gold-light);}
+
+  .article .table-scroll{overflow-x:auto;margin:0 0 14px;}
+  .article table.zone-table{font-size:12.5px;margin:0;}
+  .article .zone-table th,.article .zone-table td{padding:7px 5px;text-align:right;}
+  .article .zone-table th{font-size:9px;letter-spacing:.06em;}
+  .article .zone-table th:first-child,.article .zone-table td:first-child{padding-left:0;width:32%;text-align:left;}
+  .article .zone-table td.t{color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .article .zone-table span.z{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:10px;color:var(--text-muted);line-height:1.45;margin-top:2px;}
+  .article .zone-table a{color:var(--gold-light);text-decoration:none;}
+  .article .zone-table a:hover{text-decoration:underline;}
+  @media (max-width:400px){
+    .article .zone-table{font-size:11.5px;}
+    .article .zone-table th,.article .zone-table td{padding:6px 3px;}
+  }
+  /* Six columns do not fit a 320px screen, so each zone becomes a block and the
+     column headers come from data-label instead. */
+  @media (max-width:360px){
+    .article .zone-table{font-size:12px;}
+    .article .zone-table thead{display:none;}
+    .article .zone-table,.article .zone-table tbody,.article .zone-table tr{display:block;width:100%;}
+    .article .zone-table tr{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .article .zone-table tr:last-child{border-bottom:none;}
+    .article .zone-table td{display:inline-block;padding:2px 12px 2px 0;text-align:left;width:auto;}
+    .article .zone-table td:first-child{display:block;width:100%;padding:0 0 3px;}
+    .article .zone-table td.t::before{content:attr(data-label) " ";font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);}
+  }
 
   footer{text-align:center;padding:24px 0 0;font-size:11px;color:var(--text-muted);font-style:italic;border-top:1px solid var(--border);margin-top:28px;line-height:1.8;}
   footer a{color:var(--gold);text-decoration:none;}
@@ -452,9 +480,12 @@ def render_zone_index(groups, site_origin: str = "") -> str:
                 f'Waktu solat {escape(zone["primary"])}</a>'
                 f'<span>{escape(zone["location"])}</span></li>'
             )
+        heading = escape(group["state"])
+        if group.get("slug"):
+            heading = f'<a href="/zon/{group["slug"]}/">{heading}</a>'
         sections.append(
             '  <section class="zone-group">\n'
-            f"    <h2>{escape(group['state'])}</h2>\n"
+            f"    <h2>{heading}</h2>\n"
             '    <ul class="zone-list">\n'
             + "\n".join(items)
             + "\n    </ul>\n"
@@ -488,6 +519,75 @@ def render_zone_index(groups, site_origin: str = "") -> str:
             "Pahang, Perak, Perlis, Pulau Pinang, Sabah, Sarawak, Selangor, "
             "Terengganu dan Wilayah Persekutuan."
         ),
+        canonical=canonical,
+        json_ld=json_ld,
+        body=body,
+        active="zon",
+        og_type="website",
+        og_image=f"{site_origin}{OG_IMAGE_PATH}",
+    )
+
+
+def render_state_index(
+    state,
+    rows,
+    title,
+    description,
+    canonical,
+    json_ld,
+    date_label,
+    site_origin="",
+) -> str:
+    """Render /zon/<state>/ — today's times for every zone in the state.
+
+    The table answers "waktu solat <state>" without a click and links down to
+    each zone page, which is the crawl path from a state hub to its zones.
+    """
+    body_rows = []
+    for row in rows:
+        times = row["times"]
+        cells = "".join(
+            f'        <td class="t" data-label="{label}">{times[key]}</td>\n'
+            for key, label in (
+                ("fajr", "Subuh"),
+                ("dhuhr", "Zohor"),
+                ("asr", "Asar"),
+                ("maghrib", "Maghrib"),
+                ("isyak", "Isyak"),
+            )
+        )
+        body_rows.append(
+            "      <tr>\n"
+            f'        <td><a href="/zon/{row["slug"]}/">{escape(row["primary"])}</a>'
+            f'<span class="z">{escape(row["location"])}</span></td>\n'
+            f"{cells}"
+            "      </tr>"
+        )
+
+    body = (
+        '<article class="article">\n'
+        f"  <h1>Waktu Solat {escape(state)}</h1>\n"
+        f'  <div class="article-meta">Kaedah JAKIM · {escape(date_label)}</div>\n'
+        f"  <p>Waktu solat hari ini bagi {len(rows)} zon di {escape(state)}. "
+        "Setiap baris menggunakan titik rujukan barat zon, iaitu titik yang "
+        "dipakai JAKIM untuk waktu rasmi bagi seluruh zon. Pilih zon untuk "
+        "jadual penuh, termasuk waktu di sempadan timurnya.</p>\n"
+        f"  <h2>Zon waktu solat di {escape(state)}</h2>\n"
+        '  <div class="table-scroll">\n'
+        '    <table class="zone-table">\n'
+        "      <thead><tr><th>Zon</th><th>Subuh</th><th>Zohor</th>"
+        "<th>Asar</th><th>Maghrib</th><th>Isyak</th></tr></thead>\n"
+        "      <tbody>\n" + "\n".join(body_rows) + "\n      </tbody>\n"
+        "    </table>\n"
+        "  </div>\n"
+        "  <p>Waktu ini dikira dengan kaedah falak yang sama seperti halaman "
+        'utama. Lihat <a href="/panduan/">panduan pengiraan</a> untuk ihtiyati, '
+        "penafian dan sebab waktu solat berbeza antara daerah.</p>\n"
+        "</article>"
+    )
+    return _shell(
+        title=title,
+        description=description,
         canonical=canonical,
         json_ld=json_ld,
         body=body,

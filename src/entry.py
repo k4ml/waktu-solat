@@ -20,6 +20,7 @@ from pages import (
     render_panduan,
     render_panduan_index,
     render_sitemap,
+    render_state_index,
     render_zone_index,
 )
 
@@ -112,6 +113,25 @@ LEGACY_ZONE_SLUGS = {
     "bandar-tawau": "tawau",
     "zon-khas-(kawasan-khas)": "kawasan-khas-sarawak",
 }
+
+
+def _state_slug(state: str) -> str:
+    """URL slug for a state: 'W.P. Kuala Lumpur & Putrajaya' -> 'kuala-lumpur-putrajaya'."""
+    return _slugify(state.replace("W.P. ", "").replace(" & ", "-"))
+
+
+# Only states with more than one zone get a hub at /zon/<state>/. A state with a
+# single zone is served by that zone's page - "waktu solat melaka" and the MLK01
+# zone page are the same page - which also keeps "melaka" and "labuan" from
+# meaning two different URLs.
+STATE_TO_SLUG = {}
+SLUG_TO_STATE = {}
+for _state, _zones in ZONES.items():
+    if len(_zones) < 2:
+        continue
+    _slug = _state_slug(_state)
+    STATE_TO_SLUG[_state] = _slug
+    SLUG_TO_STATE[_slug] = _state
 
 
 def _is_zone_code(text: str) -> bool:
@@ -221,6 +241,10 @@ class Default(WorkerEntrypoint):
                     status=301,
                     headers={"Location": f"{base_url}/zon/{LEGACY_ZONE_SLUGS[segment]}/"},
                 )
+            # State hubs are only built for multi-zone states, so this never
+            # shadows a zone slug.
+            if segment in SLUG_TO_STATE:
+                return self.render_state_page(SLUG_TO_STATE[segment], site_origin)
             code = segment.upper() if _is_zone_code(segment) else SLUG_TO_ZONE.get(segment)
             if code is None or get_zone_by_code(code) is None:
                 return Response("Not Found", status=404)
@@ -472,24 +496,29 @@ class Default(WorkerEntrypoint):
                 )
 
         # Breadcrumbs: the root page is the app entry, not a zone, so it carries
-        # none. Zone pages sit under the /zon/ index.
+        # none. Zone pages sit under their state hub when the state has one,
+        # then under the /zon/ index.
         breadcrumbs = ""
         crumbs = []
         if not is_index:
+            trail = [("Utama", "/"), ("Zon", "/zon/")]
+            if state in STATE_TO_SLUG:
+                trail.append((state, f"/zon/{STATE_TO_SLUG[state]}/"))
+            links = "".join(
+                f'<a href="{href}">{escape(name)}</a>'
+                '<span class="sep">&rsaquo;</span>'
+                for name, href in trail
+            )
             breadcrumbs = (
                 '    <nav class="breadcrumbs" aria-label="Jejak navigasi">'
-                '<a href="/">Utama</a>'
-                '<span class="sep">&rsaquo;</span>'
-                '<a href="/zon/">Zon</a>'
-                '<span class="sep">&rsaquo;</span>'
+                f"{links}"
                 f'<span aria-current="page">{escape(primary)}</span>'
                 "</nav>\n"
             )
             crumbs = [
-                {"name": "Utama", "item": f"{site_origin}/"},
-                {"name": "Zon", "item": f"{site_origin}/zon/"},
-                {"name": heading, "item": canonical},
+                {"name": name, "item": f"{site_origin}{href}"} for name, href in trail
             ]
+            crumbs.append({"name": heading, "item": canonical})
 
         json_ld = {
             "@context": "https://schema.org",
@@ -577,6 +606,88 @@ class Default(WorkerEntrypoint):
             },
         )
 
+    def render_state_page(self, state: str, site_origin: str = ""):
+        """The /zon/<state>/ hub: today's times for every zone in the state."""
+        now = datetime.now(MYT)
+        rows = []
+        for zone_name, data in ZONES[state].items():
+            times = calc_times(
+                now,
+                data["west"]["lat"],
+                data["west"]["lng"],
+                data["tz"],
+                data.get("elev", 10),
+            )
+            rows.append(
+                {
+                    "slug": ZONE_TO_SLUG.get(data["zone"], data["zone"]),
+                    "primary": zone_primary(data["zone"], zone_name),
+                    "location": (
+                        zone_name.split(" - ", 1)[1] if " - " in zone_name else zone_name
+                    ),
+                    "times": {k: fmt_min(v) for k, v in times.items()},
+                }
+            )
+
+        canonical = f"{site_origin}/zon/{STATE_TO_SLUG[state]}/"
+        title = f"Waktu Solat {state} Hari Ini - Jadual Semua Zon {now.year}"
+        description = (
+            f"Waktu solat hari ini bagi {len(rows)} zon JAKIM di {state}: "
+            f"Subuh, Zohor, Asar, Maghrib dan Isyak untuk setiap zon."
+        )
+        crumbs = [
+            {"name": "Utama", "item": f"{site_origin}/"},
+            {"name": "Zon", "item": f"{site_origin}/zon/"},
+            {"name": f"Waktu Solat {state}", "item": canonical},
+        ]
+        json_ld = [
+            {
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                "name": title,
+                "description": description,
+                "inLanguage": "ms",
+                "url": canonical,
+                "mainEntity": {
+                    "@type": "ItemList",
+                    "name": f"Zon waktu solat {state}",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": i,
+                            "name": row["primary"],
+                            "url": f"{site_origin}/zon/{row['slug']}/",
+                        }
+                        for i, row in enumerate(rows, start=1)
+                    ],
+                },
+            },
+            {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": i,
+                        "name": crumb["name"],
+                        "item": crumb["item"],
+                    }
+                    for i, crumb in enumerate(crumbs, start=1)
+                ],
+            },
+        ]
+        html = render_state_index(
+            state=state,
+            rows=rows,
+            title=title,
+            description=description,
+            canonical=canonical,
+            json_ld=json_ld,
+            date_label=f"{now.day} {MONTH_NAMES[now.month - 1]} {now.year}",
+            site_origin=site_origin,
+        )
+        return self.serve_content_page(html)
+
     def zone_notes(self, location: str, times: dict) -> str:
         """Prose under the prayer table.
 
@@ -616,7 +727,13 @@ class Default(WorkerEntrypoint):
                         "slug": ZONE_TO_SLUG.get(code, code),
                     }
                 )
-            groups.append({"state": state, "zones": items})
+            groups.append(
+                {
+                    "state": state,
+                    "slug": STATE_TO_SLUG.get(state),
+                    "zones": items,
+                }
+            )
         return self.serve_content_page(render_zone_index(groups, site_origin))
 
     def render_zone_selector(self, message: str = ""):
@@ -809,8 +926,10 @@ self.addEventListener('fetch', event => {
         )
 
     def serve_sitemap(self, site_origin: str):
-        """List every indexable URL: root, zone index, zone pages, articles."""
+        """List every indexable URL: root, zone index, states, zones, articles."""
         urls = [(f"{site_origin}/", None), (f"{site_origin}/zon/", None)]
+        for state_slug in sorted(STATE_TO_SLUG.values()):
+            urls.append((f"{site_origin}/zon/{state_slug}/", None))
         for code in sorted(ZONE_TO_SLUG):
             slug = ZONE_TO_SLUG[code]
             urls.append((f"{site_origin}/zon/{slug}/", None))
